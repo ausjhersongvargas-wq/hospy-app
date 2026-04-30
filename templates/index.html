@@ -1343,9 +1343,10 @@
       <div id="invError" class="error-box" style="display:none"></div>
       <div id="invContent" style="display:none">
         <div class="section-header">
-          <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <div class="section-title">Invoice Log</div>
             <div class="section-count" id="invCount">—</div>
+            <button class="archive-link" id="btnFixTotals" onclick="fixInvoiceTotals()" style="margin-left:4px">⚙ Fix totals</button>
           </div>
           <div class="filters">
             <input class="filter-input" type="search" placeholder="Search supplier or invoice #..." id="invSearchInput" oninput="renderInvoices()" />
@@ -1355,11 +1356,11 @@
           <table id="invTable">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Invoice #</th>
-                <th>Supplier</th>
-                <th class="hide-mobile">Items</th>
-                <th>Total</th>
+                <th onclick="sortInvoices('date')" style="cursor:pointer">Date <span id="inv-arr-date" class="sort-arrow">↕</span></th>
+                <th onclick="sortInvoices('invoice_number')" style="cursor:pointer">Invoice # <span id="inv-arr-invoice_number" class="sort-arrow">↕</span></th>
+                <th onclick="sortInvoices('provider')" style="cursor:pointer">Supplier <span id="inv-arr-provider" class="sort-arrow">↕</span></th>
+                <th class="hide-mobile" onclick="sortInvoices('items')" style="cursor:pointer">Items <span id="inv-arr-items" class="sort-arrow">↕</span></th>
+                <th onclick="sortInvoices('total')" style="cursor:pointer">Total <span id="inv-arr-total" class="sort-arrow">↕</span></th>
                 <th class="hide-mobile">Status</th>
               </tr>
             </thead>
@@ -1684,6 +1685,8 @@
     let kpisData = null;
     let productsData = [];
     let invoicesData = [];
+    let invSortKey = 'date';
+    let invSortAsc = false;
     let prodSortKey = 'name';
     let prodSortAsc = true;
     let editingProduct = null;
@@ -2007,7 +2010,7 @@
         const res = await fetch('/api/invoices');
         const json = await res.json();
         if (!json.ok) throw new Error(json.error);
-        invoicesData = json.data.reverse(); // newest first
+        invoicesData = json.data;
         renderInvoices();
         document.getElementById('invLoading').style.display = 'none';
         document.getElementById('invContent').style.display = 'block';
@@ -2019,12 +2022,53 @@
       }
     }
 
+    function _parseInvDate(str) {
+      // Expects DD/MM/YYYY
+      if (!str) return 0;
+      const parts = str.split('/');
+      if (parts.length !== 3) return 0;
+      return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+    }
+
+    function sortInvoices(key) {
+      if (invSortKey === key) {
+        invSortAsc = !invSortAsc;
+      } else {
+        invSortKey = key;
+        invSortAsc = (key === 'provider');
+      }
+      renderInvoices();
+    }
+
     function renderInvoices() {
       const search = document.getElementById('invSearchInput').value.toLowerCase();
 
       let filtered = invoicesData.filter(i => {
         if (search && !i.provider.toLowerCase().includes(search) && !i.invoice_number.toLowerCase().includes(search)) return false;
         return true;
+      });
+
+      // Sort
+      filtered.sort((a, b) => {
+        let cmp = 0;
+        if (invSortKey === 'provider') {
+          cmp = (a.provider || '').localeCompare(b.provider || '');
+        } else if (invSortKey === 'date') {
+          cmp = _parseInvDate(a.date) - _parseInvDate(b.date);
+        } else if (invSortKey === 'total') {
+          cmp = (a.total || 0) - (b.total || 0);
+        } else if (invSortKey === 'items') {
+          cmp = (a.items || 0) - (b.items || 0);
+        } else if (invSortKey === 'invoice_number') {
+          cmp = (a.invoice_number || '').localeCompare(b.invoice_number || '');
+        }
+        return invSortAsc ? cmp : -cmp;
+      });
+
+      // Update sort arrow indicators
+      ['provider','date','total','items','invoice_number'].forEach(k => {
+        const el = document.getElementById('inv-arr-' + k);
+        if (el) el.textContent = (invSortKey === k) ? (invSortAsc ? ' ▲' : ' ▼') : '↕';
       });
 
       document.getElementById('invCount').textContent = `${filtered.length} invoices`;
@@ -2051,6 +2095,28 @@
           <td class="hide-mobile"><span class="badge ok"><span class="badge-dot"></span>${escHtml(i.status || 'Processed')}</span></td>
         </tr>`;
       }).join('');
+    }
+
+    async function fixInvoiceTotals() {
+      const btn = document.getElementById('btnFixTotals');
+      if (!btn) return;
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ Fixing…';
+      try {
+        const res  = await fetch('/api/invoices/fix-totals', { method: 'POST' });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        btn.textContent = `✓ Fixed ${json.fixed}`;
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+        // Reload invoice data to show corrected totals
+        invoicesData = [];
+        await loadInvoices();
+      } catch(e) {
+        btn.textContent = '✗ Error';
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+        alert('Fix failed: ' + e.message);
+      }
     }
 
     function openInvoice(filename) {

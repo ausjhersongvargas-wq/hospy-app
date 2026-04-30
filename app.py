@@ -6,6 +6,7 @@ from sheets import get_kpis, get_products, get_invoices, update_product, \
                    get_products_by_category, batch_update_stock, \
                    get_categories, get_products_by_section, add_product, delete_product, \
                    update_product_category, get_archived_products, restore_product, \
+                   fix_invoice_log_totals, \
                    get_menu_items, get_menu_item_detail, add_menu_item, \
                    add_menu_ingredient, delete_menu_ingredient
 
@@ -81,6 +82,15 @@ def api_products():
 def api_invoices():
     try:
         return jsonify({'ok': True, 'data': get_invoices()})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/invoices/fix-totals', methods=['POST'])
+@login_required
+def api_fix_invoice_totals():
+    try:
+        fixes = fix_invoice_log_totals()
+        return jsonify({'ok': True, 'fixed': len(fixes), 'details': fixes})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 

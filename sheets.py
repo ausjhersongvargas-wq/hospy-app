@@ -116,6 +116,55 @@ def get_invoices():
 
     return invoices
 
+def fix_invoice_log_totals():
+    """
+    Scan Invoice_Log and correct totals that are 100x too large
+    (caused by pdfplumber dropping decimal points during extraction).
+    Returns list of dicts describing each fix applied.
+    """
+    import time as _time
+    sh  = get_spreadsheet(write=True)
+    il  = sh.worksheet('Invoice_Log')
+    rows = il.get_all_values()
+
+    def _safe(v):
+        try:
+            return float(str(v).replace(',', '').replace('$', '').strip())
+        except Exception:
+            return 0.0
+
+    fixes = []
+    for i, row in enumerate(rows[2:], start=3):
+        if not any(row[:4]):
+            continue
+        total = _safe(row[5]) if len(row) > 5 else 0.0
+        if total <= 0:
+            continue
+
+        items     = int(_safe(row[4])) if len(row) > 4 else 0
+        provider  = row[2].strip() if len(row) > 2 else ''
+        inv_num   = row[1].strip() if len(row) > 1 else ''
+        factor    = 1
+
+        # A total > 10,000 is almost certainly 100x off for a hospitality business
+        if total > 10000:
+            factor = 100
+        # Between 1,000–10,000 with very high per-item average → also likely 100x
+        elif total > 1000 and items > 0 and (total / items) > 300:
+            factor = 100
+
+        if factor > 1:
+            new_total = round(total / factor, 2)
+            il.update([[new_total]], f'F{i}', value_input_option='USER_ENTERED')
+            fixes.append({
+                'row': i, 'provider': provider, 'invoice_number': inv_num,
+                'old_total': total, 'new_total': new_total,
+            })
+            _time.sleep(0.25)   # respect Sheets rate limit
+
+    return fixes
+
+
 def get_kpis():
     products = get_products()
     invoices = get_invoices()
