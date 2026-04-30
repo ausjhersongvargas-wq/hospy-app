@@ -5,7 +5,7 @@ from flask import (Flask, render_template, jsonify, send_file,
 from sheets import get_kpis, get_products, get_invoices, update_product, \
                    get_products_by_category, batch_update_stock, \
                    get_categories, get_products_by_section, add_product, delete_product, \
-                   update_product_category, \
+                   update_product_category, get_archived_products, restore_product, \
                    get_menu_items, get_menu_item_detail, add_menu_item, \
                    add_menu_ingredient, delete_menu_ingredient
 
@@ -213,6 +213,27 @@ def api_delete_product():
         if not product_id:
             return jsonify({'ok': False, 'error': 'Missing product id'}), 400
         row = delete_product(product_id)
+        return jsonify({'ok': True, 'row': row})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products/archived')
+@login_required
+def api_archived_products():
+    try:
+        return jsonify({'ok': True, 'data': get_archived_products()})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products/restore', methods=['POST'])
+@login_required
+def api_restore_product():
+    try:
+        data       = request.get_json()
+        product_id = str(data.get('id', '')).strip()
+        if not product_id:
+            return jsonify({'ok': False, 'error': 'Missing product id'}), 400
+        row = restore_product(product_id)
         return jsonify({'ok': True, 'row': row})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500

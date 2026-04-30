@@ -701,6 +701,37 @@
     }
     .spc-delete-btn:hover { color: var(--coral); }
 
+    /* ── ARCHIVE VIEW ── */
+    .archive-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.5px;
+      color: var(--muted); background: none; border: none;
+      cursor: pointer; padding: 0; text-decoration: underline dotted;
+      transition: color 0.15s;
+    }
+    .archive-link:hover { color: var(--text); }
+    .archived-card {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 0.5rem 1rem; align-items: center;
+      background: var(--surface); border: 1.5px solid var(--border);
+      padding: 0.75rem 1rem; margin-bottom: 0.5rem;
+      opacity: 0.75;
+    }
+    .archived-card:hover { opacity: 1; }
+    .archived-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-top: 2px;
+    }
+    .restore-btn {
+      padding: 5px 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      border: 1.5px solid var(--teal); color: var(--teal); background: none;
+      cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .restore-btn:hover { background: var(--teal); color: #fff; }
+    .restore-btn:disabled { opacity: 0.4; pointer-events: none; }
+
     /* ── ADD PRODUCT DRAWER ── */
     .add-drawer-backdrop {
       position: fixed; inset: 0;
@@ -1445,7 +1476,8 @@
               Tap a field to edit · Par = ideal level · Stock = what you have now
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:0.5rem">
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+            <button class="archive-link" onclick="loadArchiveView()" id="btnViewArchive" style="display:none">🗄 Archive</button>
             <div class="section-count" id="stockProductCount">—</div>
             <button class="add-product-btn" id="btnAddProduct" onclick="openAddProductDrawer()" style="display:none">+ Add</button>
           </div>
@@ -1465,6 +1497,23 @@
             <span id="btnGenerateText">Generate Order</span>
           </button>
         </div>
+      </div>
+
+      <!-- Archive view -->
+      <div id="tools-stock-archive" style="display:none">
+        <button class="back-btn" onclick="_showToolView('tools-stock-list')">← Back to Stock</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.5rem">
+          <div>
+            <div class="section-title">Archived Products</div>
+            <div style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px">
+              Products removed from active stock — restore any to add them back
+            </div>
+          </div>
+          <div class="section-count" id="archiveCount">—</div>
+        </div>
+        <div id="archiveLoading" class="loading-overlay"><div class="spinner"></div><div class="loading-text">Loading archive...</div></div>
+        <div id="archiveError" class="error-box" style="display:none"></div>
+        <div id="archiveList"></div>
       </div>
 
       <!-- Step 4: Order result -->
@@ -2022,7 +2071,7 @@
     // ── TOOLS: NAVIGATION ──
     const TOOL_VIEWS = [
       'tools-home', 'tools-stock-home', 'tools-kitchen-home', 'tools-bar-home',
-      'tools-stock-list', 'tools-menu-list', 'tools-stock-order'
+      'tools-stock-list', 'tools-stock-archive', 'tools-menu-list', 'tools-stock-order'
     ];
     function _showToolView(id) {
       TOOL_VIEWS.forEach(v => {
@@ -2068,6 +2117,7 @@
       document.getElementById('stockFilterChips').style.display  = 'none';
       document.getElementById('stockGenerateBar').style.display  = 'none';
       document.getElementById('btnAddProduct').style.display     = 'none';
+      document.getElementById('btnViewArchive').style.display    = 'none';
 
       try {
         const res  = await fetch(`/api/stock-tool/section/${section}`);
@@ -2086,6 +2136,7 @@
         document.getElementById('stockListLoading').style.display = 'none';
         document.getElementById('stockProductCount').textContent  = `${stockProducts.length} products`;
         document.getElementById('btnAddProduct').style.display    = '';
+        document.getElementById('btnViewArchive').style.display   = '';
 
         // Load ALL categories (for cross-section reassignment dropdown)
         try {
@@ -2469,7 +2520,7 @@
 
     // ── TOOLS: DELETE PRODUCT ──
     function confirmDeleteProduct(id, name) {
-      if (!confirm(`Delete "${name}"?\n\nThis will permanently remove it from the spreadsheet.`)) return;
+      if (!confirm(`Archive "${name}"?\n\nIt will be moved to the Archive — you can restore it any time.`)) return;
       deleteProduct(id);
     }
 
@@ -2495,6 +2546,82 @@
         renderFilterChips();
         renderStockList();
         alert('Error deleting product: ' + e.message);
+      }
+    }
+
+    // ── TOOLS: ARCHIVE VIEW ──
+    async function loadArchiveView() {
+      _showToolView('tools-stock-archive');
+      document.getElementById('archiveLoading').style.display = 'flex';
+      document.getElementById('archiveError').style.display   = 'none';
+      document.getElementById('archiveList').innerHTML         = '';
+      document.getElementById('archiveCount').textContent     = '—';
+
+      try {
+        const res  = await fetch('/api/products/archived');
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        const products = json.data;
+        document.getElementById('archiveLoading').style.display = 'none';
+        document.getElementById('archiveCount').textContent     = `${products.length} archived`;
+        renderArchiveList(products);
+      } catch(e) {
+        document.getElementById('archiveLoading').style.display = 'none';
+        const el = document.getElementById('archiveError');
+        el.style.display = ''; el.textContent = '✗ ' + e.message;
+      }
+    }
+
+    function renderArchiveList(products) {
+      const el = document.getElementById('archiveList');
+      if (!products.length) {
+        el.innerHTML = '<div class="empty">No archived products.</div>';
+        return;
+      }
+      el.innerHTML = products.map(p => `
+        <div class="archived-card" id="arc-${escHtml(p.id)}">
+          <div>
+            <div class="spc-name">${escHtml(p.name)}</div>
+            <div class="archived-meta">
+              ${escHtml(p.id)}
+              ${p.category ? ' · ' + escHtml(p.category) : ''}
+              ${p.provider ? ' · ' + escHtml(p.provider) : ''}
+              ${p.archived_date ? ' · archived ' + escHtml(p.archived_date) : ''}
+            </div>
+          </div>
+          <button class="restore-btn" id="restore-${escHtml(p.id)}"
+                  onclick="restoreProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.name)})">
+            ↩ Restore
+          </button>
+        </div>`).join('');
+    }
+
+    async function restoreProduct(id, name) {
+      const btn = document.getElementById(`restore-${id}`);
+      if (btn) { btn.disabled = true; btn.textContent = 'Restoring…'; }
+
+      try {
+        const res  = await fetch('/api/products/restore', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ id }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+
+        // Remove card from UI
+        const card = document.getElementById(`arc-${id}`);
+        if (card) card.remove();
+
+        // Update count
+        const remaining = document.querySelectorAll('.archived-card').length;
+        document.getElementById('archiveCount').textContent = `${remaining} archived`;
+        if (!remaining) {
+          document.getElementById('archiveList').innerHTML = '<div class="empty">No archived products.</div>';
+        }
+      } catch(e) {
+        if (btn) { btn.disabled = false; btn.textContent = '↩ Restore'; }
+        alert('Error restoring: ' + e.message);
       }
     }
 

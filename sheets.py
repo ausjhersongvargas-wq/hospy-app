@@ -268,22 +268,96 @@ def update_product_category(product_id, new_category):
     raise ValueError(f'Product {product_id} not found')
 
 
+def _ensure_archived_sheet(sh):
+    """Return Archived_Stock worksheet, creating it if needed."""
+    wss = {ws.title: ws for ws in sh.worksheets()}
+    if 'Archived_Stock' not in wss:
+        ws = sh.add_worksheet(title='Archived_Stock', rows=500, cols=12)
+        ws.append_row(['Product ID', 'Name', 'Category', 'Provider', 'Unit',
+                       'Par Level', 'Current Stock', 'Reorder Point', 'Unit Cost',
+                       'Total Value', 'Status', 'Archived Date'])
+        return ws
+    return wss['Archived_Stock']
+
+
 def delete_product(product_id):
-    """Find product row by ID (col A) and delete the entire row."""
+    """Move product row to Archived_Stock instead of permanently deleting."""
     sh   = get_spreadsheet(write=True)
     ms   = sh.worksheet('Master_Stock')
     rows = ms.get_all_values()
 
-    row_num = None
+    row_num  = None
+    row_data = None
     for i, row in enumerate(rows[2:], start=3):
-        if row[0].strip() == product_id:
-            row_num = i
+        if row and row[0].strip() == product_id:
+            row_num  = i
+            row_data = list(row)
             break
 
     if row_num is None:
         raise ValueError(f'Product {product_id} not found in Master_Stock')
 
+    # Archive: copy first 11 cols + today's date
+    arch = _ensure_archived_sheet(sh)
+    today = datetime.now().strftime('%d/%m/%Y')
+    archived_row = (row_data + [''] * 12)[:11] + [today]
+    arch.append_row(archived_row, value_input_option='USER_ENTERED')
+
+    # Remove from Master_Stock
     ms.delete_rows(row_num)
+    return row_num
+
+
+def get_archived_products():
+    """Return list of archived products from Archived_Stock sheet."""
+    sh  = get_spreadsheet(write=False)
+    wss = {ws.title: ws for ws in sh.worksheets()}
+    if 'Archived_Stock' not in wss:
+        return []
+    rows = wss['Archived_Stock'].get_all_values()
+    products = []
+    for i, row in enumerate(rows[1:], start=2):   # 1 header row
+        if len(row) < 2 or not row[1].strip():
+            continue
+        products.append({
+            'id':            row[0].strip() if row[0] else '',
+            'name':          row[1].strip(),
+            'category':      row[2].strip() if len(row) > 2 else '',
+            'provider':      row[3].strip() if len(row) > 3 else '',
+            'unit':          row[4].strip() if len(row) > 4 else '',
+            'archived_date': row[11].strip() if len(row) > 11 else '',
+            '_row':          i,
+        })
+    return products
+
+
+def restore_product(product_id):
+    """Move a product from Archived_Stock back to Master_Stock."""
+    sh  = get_spreadsheet(write=True)
+    wss = {ws.title: ws for ws in sh.worksheets()}
+    if 'Archived_Stock' not in wss:
+        raise ValueError('Archived_Stock sheet does not exist')
+
+    arch = wss['Archived_Stock']
+    rows = arch.get_all_values()
+
+    row_num  = None
+    row_data = None
+    for i, row in enumerate(rows[1:], start=2):
+        if row and row[0].strip() == product_id:
+            row_num  = i
+            row_data = list(row)
+            break
+
+    if row_num is None:
+        raise ValueError(f'Product {product_id} not found in Archived_Stock')
+
+    # Restore: append first 11 cols back to Master_Stock
+    ms_row = (row_data + [''] * 11)[:11]
+    sh.worksheet('Master_Stock').append_row(ms_row, value_input_option='USER_ENTERED')
+
+    # Remove from archive
+    arch.delete_rows(row_num)
     return row_num
 
 
