@@ -3,7 +3,10 @@ import functools
 from flask import (Flask, render_template, jsonify, send_file,
                    abort, request, session, redirect, url_for)
 from sheets import get_kpis, get_products, get_invoices, update_product, \
-                   get_products_by_category, batch_update_stock
+                   get_products_by_category, batch_update_stock, \
+                   get_categories, get_products_by_section, add_product, delete_product, \
+                   get_menu_items, get_menu_item_detail, add_menu_item, \
+                   add_menu_ingredient, delete_menu_ingredient
 
 # ── CONFIG ───────────────────────────────────────────────────────────────────
 INBOX_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -14,6 +17,13 @@ APP_PASS   = os.environ.get('APP_PASSWORD', 'cumbia2024')   # override in Railwa
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+
+@app.after_request
+def no_cache(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 # ── AUTH DECORATOR ───────────────────────────────────────────────────────────
 def login_required(f):
@@ -43,6 +53,7 @@ def logout():
     return redirect(url_for('login'))
 
 # ── MAIN APP ─────────────────────────────────────────────────────────────────
+
 @app.route('/')
 @login_required
 def index():
@@ -100,6 +111,28 @@ def serve_invoice(filename):
     return send_file(pdf_path, mimetype='application/pdf')
 
 # ── STOCK TOOL ───────────────────────────────────────────────────────────────
+@app.route('/api/categories')
+@login_required
+def api_categories():
+    try:
+        return jsonify({'ok': True, 'data': get_categories()})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/stock-tool/section/<section>')
+@login_required
+def api_stock_tool_section(section):
+    allowed = {'kitchen', 'bar'}
+    if section.lower() not in allowed:
+        return jsonify({'ok': False, 'error': 'Invalid section'}), 400
+    try:
+        products = get_products_by_section(section)
+        for p in products:
+            p.pop('_row', None)
+        return jsonify({'ok': True, 'data': products, 'section': section})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
 @app.route('/api/stock-tool/<category>')
 @login_required
 def api_stock_tool_products(category):
@@ -108,7 +141,6 @@ def api_stock_tool_products(category):
         return jsonify({'ok': False, 'error': 'Invalid category'}), 400
     try:
         products = get_products_by_category(category)
-        # Remove internal _row field before sending to client
         for p in products:
             p.pop('_row', None)
         return jsonify({'ok': True, 'data': products, 'category': category})
@@ -123,7 +155,6 @@ def api_stock_tool_save():
         updates = data.get('updates', [])
         if not updates:
             return jsonify({'ok': False, 'error': 'No updates provided'}), 400
-        # Validate each entry
         clean = []
         for u in updates:
             clean.append({
@@ -133,6 +164,105 @@ def api_stock_tool_save():
             })
         count = batch_update_stock(clean)
         return jsonify({'ok': True, 'updated': count})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products/add', methods=['POST'])
+@login_required
+def api_add_product():
+    try:
+        data = request.get_json()
+        name     = str(data.get('name', '')).strip()
+        category = str(data.get('category', '')).strip()
+        if not name or not category:
+            return jsonify({'ok': False, 'error': 'Name and category are required'}), 400
+        product = add_product(
+            name          = name,
+            category      = category,
+            provider      = str(data.get('provider', '')).strip(),
+            unit          = str(data.get('unit', '')).strip(),
+            par_level     = float(data.get('par_level', 0)),
+            current_stock = float(data.get('current_stock', 0)),
+            unit_cost     = float(data.get('unit_cost', 0)),
+        )
+        return jsonify({'ok': True, 'product': product})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products/delete', methods=['POST'])
+@login_required
+def api_delete_product():
+    try:
+        data       = request.get_json()
+        product_id = str(data.get('id', '')).strip()
+        if not product_id:
+            return jsonify({'ok': False, 'error': 'Missing product id'}), 400
+        row = delete_product(product_id)
+        return jsonify({'ok': True, 'row': row})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+# ── MENU ─────────────────────────────────────────────────────────────────────
+@app.route('/api/menu/items')
+@login_required
+def api_menu_items():
+    try:
+        return jsonify({'ok': True, 'data': get_menu_items()})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/menu/item/<dish_id>')
+@login_required
+def api_menu_item(dish_id):
+    try:
+        return jsonify({'ok': True, 'data': get_menu_item_detail(dish_id)})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/menu/items/add', methods=['POST'])
+@login_required
+def api_menu_items_add():
+    try:
+        data     = request.get_json()
+        name     = str(data.get('name', '')).strip()
+        category = str(data.get('category', '')).strip()
+        notes    = str(data.get('notes', '')).strip()
+        if not name:
+            return jsonify({'ok': False, 'error': 'Dish name is required'}), 400
+        dish = add_menu_item(name, category, notes)
+        return jsonify({'ok': True, 'dish': dish})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/menu/ingredients/add', methods=['POST'])
+@login_required
+def api_menu_ingredients_add():
+    try:
+        data            = request.get_json()
+        dish_id         = str(data.get('dish_id', '')).strip()
+        product_id      = str(data.get('product_id', '')).strip()
+        ingredient_name = str(data.get('ingredient_name', '')).strip()
+        qty_needed      = float(data.get('qty_needed', 0))
+        unit            = str(data.get('unit', '')).strip()
+        optional        = bool(data.get('optional', False))
+        if not dish_id or not product_id:
+            return jsonify({'ok': False, 'error': 'dish_id and product_id are required'}), 400
+        add_menu_ingredient(dish_id, product_id, ingredient_name, qty_needed, unit, optional)
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/menu/ingredients/delete', methods=['POST'])
+@login_required
+def api_menu_ingredients_delete():
+    try:
+        data       = request.get_json()
+        dish_id    = str(data.get('dish_id', '')).strip()
+        product_id = str(data.get('product_id', '')).strip()
+        if not dish_id or not product_id:
+            return jsonify({'ok': False, 'error': 'dish_id and product_id are required'}), 400
+        delete_menu_ingredient(dish_id, product_id)
+        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 

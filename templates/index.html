@@ -612,6 +612,138 @@
     }
     .back-btn:hover { opacity: 0.7; }
 
+    /* ── FILTER CHIPS ── */
+    .filter-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 1rem;
+    }
+    .filter-chip {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border: 1.5px solid var(--border2);
+      background: var(--surface2);
+      color: var(--muted);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--teal); color: var(--teal); }
+    .filter-chip.active {
+      background: var(--teal); border-color: var(--teal);
+      color: #fff;
+    }
+
+    /* ── CATEGORY GROUP HEADER ── */
+    .cat-group-header {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem; letter-spacing: 2px;
+      color: var(--teal);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+      margin: 1.25rem 0 0.5rem;
+    }
+    .cat-group-header:first-child { margin-top: 0; }
+
+    /* ── ADD PRODUCT BUTTON ── */
+    .add-product-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      color: var(--text);
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .add-product-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── DELETE PRODUCT BUTTON ── */
+    .spc-delete-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--border2); font-size: 18px; line-height: 1;
+      padding: 2px 6px; transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .spc-delete-btn:hover { color: var(--coral); }
+
+    /* ── ADD PRODUCT DRAWER ── */
+    .add-drawer-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(55,64,80,0.4);
+      z-index: 198;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .add-drawer-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .add-drawer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      max-width: 540px; margin: 0 auto;
+      background: var(--surface);
+      border-top: 2px solid var(--border);
+      padding: 1.25rem 1.5rem 2rem;
+      z-index: 199;
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0,0.67,0);
+      max-height: 92vh; overflow-y: auto;
+    }
+    .add-drawer.open { transform: translateY(0); }
+
+    .add-drawer-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem; letter-spacing: 3px; color: var(--navy);
+      margin-bottom: 1.25rem;
+    }
+    .add-drawer-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .add-drawer-grid .full { grid-column: 1 / -1; }
+    .add-field-label {
+      display: block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .add-field-input, .add-field-select {
+      width: 100%; padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2); color: var(--text);
+      font-family: 'Barlow', sans-serif; font-size: 14px;
+      outline: none; transition: border-color 0.15s;
+      appearance: none;
+    }
+    .add-field-input:focus, .add-field-select:focus { border-color: var(--teal); background: #fff; }
+    .add-drawer-actions {
+      display: flex; gap: 0.75rem; margin-top: 1.25rem;
+    }
+    .add-drawer-save {
+      flex: 1; padding: 14px;
+      background: var(--teal); color: #fff; border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; letter-spacing: 3px;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .add-drawer-save:hover { opacity: 0.85; }
+    .add-drawer-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .add-drawer-cancel {
+      padding: 14px 20px;
+      background: none; border: 1.5px solid var(--border2);
+      color: var(--muted);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; letter-spacing: 2px;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .add-drawer-cancel:hover { border-color: var(--coral); color: var(--coral); }
+    .add-drawer-error {
+      background: rgba(255,82,69,0.07);
+      border: 1px solid rgba(255,82,69,0.25);
+      color: var(--coral);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; padding: 10px 12px; margin-top: 0.75rem;
+      display: none;
+    }
+
     /* ── STOCK PRODUCT CARD ── */
     .stock-product-card {
       background: var(--surface);
@@ -620,8 +752,8 @@
       padding: 1rem 1.25rem;
       margin-bottom: 0.6rem;
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.5rem 1.5rem;
+      grid-template-columns: 1fr auto auto;
+      gap: 0.5rem 1rem;
       align-items: center;
     }
     .stock-product-card:focus-within { border-color: var(--teal); }
@@ -665,10 +797,195 @@
 
     @media (max-width: 500px) {
       .stock-product-card {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr auto;
       }
-      .spc-fields { justify-content: flex-start; }
+      .spc-fields { justify-content: flex-start; grid-column: 1 / -1; }
       .spc-input { width: 80px; height: 52px; }
+      .spc-delete-btn { grid-row: 1; grid-column: 2; align-self: start; }
+    }
+    @media (max-width: 400px) {
+      .add-drawer-grid { grid-template-columns: 1fr; }
+      .add-drawer-grid .full { grid-column: 1; }
+    }
+
+    /* ── MENU TABS ── */
+    .menu-tabs {
+      display: flex; gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.25rem;
+    }
+    .menu-tab {
+      padding: 0.5rem 1.35rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      border: none; background: none; cursor: pointer; color: var(--muted);
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .menu-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+    .menu-tab:hover:not(.active) { color: var(--text); }
+
+    /* ── MENU CATEGORY SECTIONS ── */
+    .cat-section { margin-bottom: 2rem; }
+    .cat-section-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding-bottom: 0.5rem; margin-bottom: 0.75rem;
+      border-bottom: 2px solid;
+    }
+    .cat-section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .cat-section-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--muted); margin-left: auto;
+    }
+
+    /* ── DISH GRID & CARDS ── */
+    .dish-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.65rem;
+    }
+    .dish-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-left-width: 3px;
+      padding: 0.85rem 1rem;
+      cursor: pointer;
+      transition: box-shadow 0.15s, border-color 0.15s;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .dish-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .dish-card-name {
+      font-weight: 600; font-size: 13.5px; color: var(--text); line-height: 1.3;
+    }
+    .dish-card-notes {
+      font-size: 11.5px; color: var(--muted); line-height: 1.4;
+    }
+    .dish-card-footer {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+    }
+
+    /* Status dots / badges */
+    .status-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; flex-shrink: 0;
+    }
+    .status-dot.ok  { background: var(--teal); }
+    .status-dot.low { background: var(--yellow); }
+    .status-dot.out { background: var(--coral); }
+    .status-dot.na  { background: var(--border2); }
+
+    .status-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .status-label.ok  { color: var(--teal); }
+    .status-label.low { color: var(--yellow); }
+    .status-label.out { color: var(--coral); }
+    .status-label.na  { color: var(--muted); }
+
+    /* Menu dish drawer */
+    .menu-drawer-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(55,64,80,0.4);
+      z-index: 198; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .menu-drawer-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .menu-drawer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      max-width: 640px; margin: 0 auto;
+      background: var(--surface);
+      border-top: 2px solid var(--border);
+      z-index: 199;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0,0.67,0);
+      max-height: 90vh; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .menu-drawer.open { transform: translateY(0); }
+
+    .menu-drawer-header {
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface); z-index: 1;
+    }
+    .menu-drawer-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem; letter-spacing: 3px; color: var(--navy);
+      line-height: 1.1;
+    }
+    .menu-drawer-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted); margin-top: 4px;
+    }
+    .menu-drawer-can-make {
+      display: flex; align-items: baseline; gap: 0.5rem;
+      margin-top: 0.75rem; flex-wrap: wrap;
+    }
+    .can-make-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.5rem; color: var(--teal); line-height: 1;
+    }
+    .can-make-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .limiting-ingredient {
+      font-size: 12px; color: var(--coral);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px; width: 100%;
+    }
+    .menu-drawer-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; cursor: pointer;
+      font-size: 20px; color: var(--muted); line-height: 1;
+      padding: 4px 8px; transition: color 0.15s;
+    }
+    .menu-drawer-close:hover { color: var(--coral); }
+
+    /* Ingredient table */
+    .ingredient-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+    }
+    .ingredient-table th {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted);
+      padding: 8px 12px; text-align: left;
+      border-bottom: 1.5px solid var(--border);
+      white-space: nowrap;
+    }
+    .ingredient-table td {
+      padding: 10px 12px; color: var(--text);
+      border-bottom: 1px solid var(--surface2);
+      vertical-align: middle;
+    }
+    .ingredient-table tr:last-child td { border-bottom: none; }
+    .ingredient-table tr.optional-row td { color: var(--muted); font-style: italic; }
+    .ing-name { font-weight: 500; }
+    .ing-qty  {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; color: var(--navy); white-space: nowrap;
+    }
+    .ing-stock-low  { color: var(--yellow); font-weight: 600; }
+    .ing-stock-out  { color: var(--coral);  font-weight: 600; }
+    .ing-stock-ok   { color: var(--teal);   }
+    .ingredient-table-wrap {
+      padding: 0 1.5rem 1.5rem;
+    }
+
+    /* Add dish drawer */
+    .add-dish-note {
+      font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 1rem; line-height: 1.5;
     }
 
     /* ── GENERATE BUTTON ── */
@@ -1008,12 +1325,12 @@
         <div class="section-title" style="margin-bottom:0.5rem">Stock</div>
         <p style="color:var(--muted);font-size:13px;margin-bottom:2rem">Select a section to update stock levels</p>
         <div class="tool-grid">
-          <button class="tool-card cat-card-btn" onclick="loadStockCategory('Kitchen')">
+          <button class="tool-card cat-card-btn" onclick="showKitchenHome()">
             <div class="tool-icon">🍳</div>
             <div class="tool-name">Kitchen</div>
-            <div class="tool-desc">Food, ingredients & kitchen supplies</div>
+            <div class="tool-desc">Stock, menu & kitchen tools</div>
           </button>
-          <button class="tool-card cat-card-btn" onclick="loadStockCategory('Bar')">
+          <button class="tool-card cat-card-btn" onclick="loadStockSection('bar')">
             <div class="tool-icon">🍺</div>
             <div class="tool-name">Bar</div>
             <div class="tool-desc">Spirits, wine, beer & bar supplies</div>
@@ -1021,19 +1338,68 @@
         </div>
       </div>
 
+      <!-- Kitchen Home: Stock | Menu -->
+      <div id="tools-kitchen-home" style="display:none">
+        <button class="back-btn" onclick="showStockHome()">← Stock</button>
+        <div class="section-title" style="margin-bottom:0.5rem">Kitchen</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:2rem">Choose a kitchen tool</p>
+        <div class="tool-grid">
+          <button class="tool-card cat-card-btn" onclick="loadStockSection('kitchen')">
+            <div class="tool-icon">📦</div>
+            <div class="tool-name">Stock</div>
+            <div class="tool-desc">Update par levels & current stock</div>
+          </button>
+          <button class="tool-card cat-card-btn" onclick="loadMenuList()">
+            <div class="tool-icon">📋</div>
+            <div class="tool-name">Menu</div>
+            <div class="tool-desc">Dishes, ingredients & portions available</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Menu: Dish list -->
+      <div id="tools-menu-list" style="display:none">
+        <button class="back-btn" onclick="showKitchenHome()">← Kitchen</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem">
+          <div>
+            <div class="section-title">Menu</div>
+            <div style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px">
+              Click a dish to see ingredients & portions
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <div class="section-count" id="menuDishCount">—</div>
+            <button class="add-product-btn" id="btnAddDish" onclick="openAddDishDrawer()" style="display:none">+ Dish</button>
+          </div>
+        </div>
+        <div id="menuListLoading" class="loading-overlay"><div class="spinner"></div><div class="loading-text">Loading menu...</div></div>
+        <div id="menuListError" class="error-box" style="display:none"></div>
+        <div class="menu-tabs" id="menuTabs" style="display:none">
+          <button class="menu-tab active" id="menuTabBreakfast" onclick="setMenuTab('breakfast')">Breakfast</button>
+          <button class="menu-tab"        id="menuTabLunch"     onclick="setMenuTab('lunch')">Lunch &amp; Dinner</button>
+        </div>
+        <div id="menuDishGrid"></div>
+      </div>
+
       <!-- Step 3: Product list -->
       <div id="tools-stock-list" style="display:none">
-        <button class="back-btn" onclick="showStockHome()">← Stock</button>
+        <button class="back-btn" onclick="backFromStockList()">← Back</button>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
           <div>
             <div class="section-title" id="stockListTitle">Kitchen</div>
             <div style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px">
               Tap a field to edit · Par = ideal level · Stock = what you have now
             </div>
           </div>
-          <div class="section-count" id="stockProductCount">—</div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <div class="section-count" id="stockProductCount">—</div>
+            <button class="add-product-btn" id="btnAddProduct" onclick="openAddProductDrawer()" style="display:none">+ Add</button>
+          </div>
         </div>
+
+        <!-- Filter chips -->
+        <div id="stockFilterChips" class="filter-chips" style="display:none"></div>
 
         <div id="stockListLoading" class="loading-overlay"><div class="spinner"></div><div class="loading-text">Loading products...</div></div>
         <div id="stockListError" class="error-box" style="display:none"></div>
@@ -1105,6 +1471,110 @@
       <button class="btn-save" id="btnSave" onclick="saveProduct()">Save</button>
     </div>
     <div class="save-feedback" id="saveFeedback"></div>
+  </div>
+
+  <!-- ── ADD PRODUCT DRAWER ── -->
+  <div class="add-drawer-backdrop" id="addDrawerBackdrop" onclick="closeAddProductDrawer()"></div>
+  <div class="add-drawer" id="addProductDrawer">
+    <div class="add-drawer-title">Add Product</div>
+    <div class="add-drawer-grid">
+      <div class="full">
+        <label class="add-field-label">Product Name *</label>
+        <input class="add-field-input" id="apName" type="text" placeholder="e.g. Soda Water 330ml" />
+      </div>
+      <div>
+        <label class="add-field-label">Category *</label>
+        <select class="add-field-select" id="apCategory">
+          <option value="">Loading…</option>
+        </select>
+      </div>
+      <div>
+        <label class="add-field-label">New Category</label>
+        <input class="add-field-input" id="apNewCategory" type="text" placeholder="or type new…" />
+      </div>
+      <div>
+        <label class="add-field-label">Provider</label>
+        <input class="add-field-input" id="apProvider" type="text" placeholder="Supplier name" />
+      </div>
+      <div>
+        <label class="add-field-label">Unit</label>
+        <input class="add-field-input" id="apUnit" type="text" placeholder="e.g. bottle, kg, pack" />
+      </div>
+      <div>
+        <label class="add-field-label">Par Level</label>
+        <input class="add-field-input" id="apParLevel" type="number" min="0" step="1" value="0" />
+      </div>
+      <div>
+        <label class="add-field-label">Current Stock</label>
+        <input class="add-field-input" id="apCurrentStock" type="number" min="0" step="0.5" value="0" />
+      </div>
+      <div>
+        <label class="add-field-label">Unit Cost ($)</label>
+        <input class="add-field-input" id="apUnitCost" type="number" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+    <div class="add-drawer-error" id="apError"></div>
+    <div class="add-drawer-actions">
+      <button class="add-drawer-cancel" onclick="closeAddProductDrawer()">Cancel</button>
+      <button class="add-drawer-save" id="btnSaveProduct" onclick="saveNewProduct()">Save Product</button>
+    </div>
+  </div>
+
+  <!-- ── MENU DISH DRAWER ── -->
+  <div class="menu-drawer-backdrop" id="menuDrawerBackdrop" onclick="closeMenuDrawer()"></div>
+  <div class="menu-drawer" id="menuDrawer">
+    <div class="menu-drawer-header">
+      <button class="menu-drawer-close" onclick="closeMenuDrawer()">×</button>
+      <div class="menu-drawer-title" id="menuDishName">Dish</div>
+      <div class="menu-drawer-meta" id="menuDishMeta"></div>
+      <div class="menu-drawer-can-make">
+        <span class="can-make-number" id="menuCanMakeNum">—</span>
+        <span class="can-make-label">portions available</span>
+        <div class="limiting-ingredient" id="menuLimitingIng"></div>
+      </div>
+    </div>
+    <div class="ingredient-table-wrap">
+      <div id="menuIngLoading" class="loading-overlay" style="min-height:80px"><div class="spinner"></div><div class="loading-text">Loading ingredients...</div></div>
+      <div id="menuIngError" class="error-box" style="display:none"></div>
+      <table class="ingredient-table" id="menuIngTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Need</th>
+            <th>In Stock</th>
+            <th>Par</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="menuIngBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ADD DISH DRAWER ── -->
+  <div class="add-drawer-backdrop" id="addDishBackdrop" onclick="closeAddDishDrawer()"></div>
+  <div class="add-drawer" id="addDishDrawer">
+    <div class="add-drawer-title">Add Dish</div>
+    <p class="add-dish-note">After adding, open the Google Sheet to link ingredients via Menu_Ingredients.</p>
+    <div class="add-drawer-grid">
+      <div class="full">
+        <label class="add-field-label">Dish Name *</label>
+        <input class="add-field-input" id="adName" type="text" placeholder="e.g. Grilled Salmon" />
+      </div>
+      <div>
+        <label class="add-field-label">Category</label>
+        <input class="add-field-input" id="adCategory" type="text" placeholder="Main, Tapas, Dessert…" />
+      </div>
+      <div>
+        <label class="add-field-label">Notes</label>
+        <input class="add-field-input" id="adNotes" type="text" placeholder="Short description" />
+      </div>
+    </div>
+    <div class="add-drawer-error" id="adError"></div>
+    <div class="add-drawer-actions">
+      <button class="add-drawer-cancel" onclick="closeAddDishDrawer()">Cancel</button>
+      <button class="add-drawer-save" id="btnSaveDish" onclick="saveNewDish()">Save Dish</button>
+    </div>
   </div>
 
   <script>
@@ -1490,54 +1960,63 @@
     }
 
     // ── TOOLS: STATE ──
-    let stockCategory   = null;
-    let stockProducts   = [];   // raw from API, with current edits
+    let stockSection       = null;   // 'kitchen' | 'bar'
+    let stockCategory      = null;   // display label (e.g. 'Kitchen')
+    let stockCategoryFilter = null;  // active chip filter (category name) or null = all
+    let stockProducts      = [];     // raw from API, with current edits
+    let stockAllCategories = [];     // categories list from /api/categories
 
     // ── TOOLS: NAVIGATION ──
-    function showToolsHome() {
-      document.getElementById('tools-home').style.display       = '';
-      document.getElementById('tools-stock-home').style.display = 'none';
-      document.getElementById('tools-stock-list').style.display = 'none';
-      document.getElementById('tools-stock-order').style.display = 'none';
+    const TOOL_VIEWS = [
+      'tools-home', 'tools-stock-home', 'tools-kitchen-home',
+      'tools-stock-list', 'tools-menu-list', 'tools-stock-order'
+    ];
+    function _showToolView(id) {
+      TOOL_VIEWS.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.style.display = (v === id) ? '' : 'none';
+      });
     }
-    function startStockTool() {
-      document.getElementById('tools-home').style.display       = 'none';
-      document.getElementById('tools-stock-home').style.display = '';
-      document.getElementById('tools-stock-list').style.display = 'none';
-      document.getElementById('tools-stock-order').style.display = 'none';
-    }
-    function showStockHome() {
-      document.getElementById('tools-stock-home').style.display = '';
-      document.getElementById('tools-stock-list').style.display = 'none';
-      document.getElementById('tools-stock-order').style.display = 'none';
+    function showToolsHome()  { _showToolView('tools-home'); }
+    function startStockTool() { _showToolView('tools-stock-home'); }
+    function showStockHome()  { _showToolView('tools-stock-home'); }
+    function showKitchenHome(){ _showToolView('tools-kitchen-home'); }
+    function backFromStockList() {
+      stockSection === 'kitchen' ? showKitchenHome() : showStockHome();
     }
     function showStockList() {
-      document.getElementById('tools-stock-list').style.display  = '';
+      _showToolView('tools-stock-list');
       document.getElementById('tools-stock-order').style.display = 'none';
-      renderStockList();   // re-render with current values
+      renderStockList();
     }
 
     // ── TOOLS: LOAD PRODUCTS ──
-    async function loadStockCategory(cat) {
-      stockCategory = cat;
-      stockProducts = [];
+    async function loadStockSection(section) {
+      stockSection        = section;
+      stockCategory       = section.charAt(0).toUpperCase() + section.slice(1);
+      stockCategoryFilter = null;
+      stockProducts       = [];
 
       document.getElementById('tools-stock-home').style.display  = 'none';
       document.getElementById('tools-stock-list').style.display  = '';
       document.getElementById('tools-stock-order').style.display = 'none';
-      document.getElementById('stockListTitle').textContent = cat;
+      document.getElementById('stockListTitle').textContent       = stockCategory;
       document.getElementById('stockListLoading').style.display  = 'flex';
       document.getElementById('stockListError').style.display    = 'none';
       document.getElementById('stockProductList').innerHTML       = '';
+      document.getElementById('stockFilterChips').style.display  = 'none';
       document.getElementById('stockGenerateBar').style.display  = 'none';
+      document.getElementById('btnAddProduct').style.display     = 'none';
 
       try {
-        const res  = await fetch(`/api/stock-tool/${cat.toLowerCase()}`);
+        const res  = await fetch(`/api/stock-tool/section/${section}`);
         const json = await res.json();
         if (!json.ok) throw new Error(json.error);
         stockProducts = json.data;
         document.getElementById('stockListLoading').style.display = 'none';
-        document.getElementById('stockProductCount').textContent = `${stockProducts.length} products`;
+        document.getElementById('stockProductCount').textContent  = `${stockProducts.length} products`;
+        document.getElementById('btnAddProduct').style.display    = '';
+        renderFilterChips();
         renderStockList();
         document.getElementById('stockGenerateBar').style.display = '';
       } catch(e) {
@@ -1547,35 +2026,83 @@
       }
     }
 
+    // ── TOOLS: FILTER CHIPS ──
+    function renderFilterChips() {
+      // Build unique category list from loaded products
+      const cats = [...new Set(stockProducts.map(p => p.category).filter(Boolean))].sort();
+      const chipsEl = document.getElementById('stockFilterChips');
+      if (cats.length <= 1) { chipsEl.style.display = 'none'; return; }
+      chipsEl.style.display = '';
+      chipsEl.innerHTML = [
+        `<button class="filter-chip ${!stockCategoryFilter ? 'active' : ''}"
+          onclick="setStockFilter(null)">All</button>`,
+        ...cats.map(c => `<button class="filter-chip ${stockCategoryFilter === c ? 'active' : ''}"
+          onclick="setStockFilter(${JSON.stringify(c)})">${escHtml(c)}</button>`)
+      ].join('');
+    }
+
+    function setStockFilter(cat) {
+      stockCategoryFilter = cat;
+      renderFilterChips();
+      renderStockList();
+    }
+
     // ── TOOLS: RENDER PRODUCT LIST ──
     function renderStockList() {
       const container = document.getElementById('stockProductList');
-      if (!stockProducts.length) {
+      // Apply category filter
+      const visible = stockCategoryFilter
+        ? stockProducts.filter(p => p.category === stockCategoryFilter)
+        : stockProducts;
+
+      if (!visible.length) {
         container.innerHTML = '<div class="empty">No products found</div>';
         return;
       }
-      container.innerHTML = stockProducts.map((p, idx) => `
-        <div class="stock-product-card">
-          <div>
-            <div class="spc-name">${escHtml(p.name)}</div>
-            <div class="spc-provider">${escHtml(p.provider)}</div>
-          </div>
-          <div class="spc-fields">
-            <div class="spc-field">
-              <label>Par Level</label>
-              <input class="spc-input" type="number" min="0" step="1"
-                     id="spc-par-${idx}" value="${p.par_level}"
-                     onchange="stockProducts[${idx}].par_level = parseFloat(this.value)||0" />
+
+      // Group by category
+      const groups = {};
+      visible.forEach((p, _) => {
+        const cat = p.category || 'Other';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(p);
+      });
+
+      // Determine global index in stockProducts (for safe state updates)
+      const globalIdx = (p) => stockProducts.indexOf(p);
+
+      const multiGroup = Object.keys(groups).length > 1;
+      let html = '';
+      for (const [cat, items] of Object.entries(groups).sort(([a],[b]) => a.localeCompare(b))) {
+        if (multiGroup) html += `<div class="cat-group-header">${escHtml(cat)}</div>`;
+        html += items.map(p => {
+          const idx = globalIdx(p);
+          return `
+          <div class="stock-product-card" data-id="${escHtml(p.id)}">
+            <div>
+              <div class="spc-name">${escHtml(p.name)}</div>
+              <div class="spc-provider">${escHtml(p.provider)}${p.unit ? ' · ' + escHtml(p.unit) : ''}</div>
             </div>
-            <div class="spc-field">
-              <label>In Stock</label>
-              <input class="spc-input" type="number" min="0" step="0.5"
-                     id="spc-stk-${idx}" value="${p.current_stock}"
-                     onchange="stockProducts[${idx}].current_stock = parseFloat(this.value)||0" />
+            <div class="spc-fields">
+              <div class="spc-field">
+                <label>Par</label>
+                <input class="spc-input" type="number" min="0" step="1"
+                       id="spc-par-${idx}" value="${p.par_level}"
+                       onchange="stockProducts[${idx}].par_level = parseFloat(this.value)||0" />
+              </div>
+              <div class="spc-field">
+                <label>Stock</label>
+                <input class="spc-input" type="number" min="0" step="0.5"
+                       id="spc-stk-${idx}" value="${p.current_stock}"
+                       onchange="stockProducts[${idx}].current_stock = parseFloat(this.value)||0" />
+              </div>
             </div>
-          </div>
-        </div>
-      `).join('');
+            <button class="spc-delete-btn" title="Delete product"
+                    onclick="confirmDeleteProduct(${JSON.stringify(p.id)}, ${JSON.stringify(p.name)})">×</button>
+          </div>`;
+        }).join('');
+      }
+      container.innerHTML = html;
     }
 
     // ── TOOLS: GENERATE ORDER ──
@@ -1698,6 +2225,373 @@
         fb.textContent = '✓ Copied to clipboard';
         setTimeout(() => fb.textContent = '', 2500);
       });
+    }
+
+    // ── TOOLS: ADD PRODUCT DRAWER ──
+    async function openAddProductDrawer() {
+      // Reset form
+      document.getElementById('apName').value         = '';
+      document.getElementById('apNewCategory').value  = '';
+      document.getElementById('apProvider').value     = '';
+      document.getElementById('apUnit').value         = '';
+      document.getElementById('apParLevel').value     = '0';
+      document.getElementById('apCurrentStock').value = '0';
+      document.getElementById('apUnitCost').value     = '0';
+      document.getElementById('apError').style.display = 'none';
+      document.getElementById('btnSaveProduct').disabled = false;
+      document.getElementById('btnSaveProduct').textContent = 'Save Product';
+
+      // Load categories
+      const sel = document.getElementById('apCategory');
+      sel.innerHTML = '<option value="">Loading…</option>';
+      try {
+        const res  = await fetch('/api/categories');
+        const json = await res.json();
+        if (json.ok) {
+          sel.innerHTML = json.data.map(c =>
+            `<option value="${escHtml(c)}">${escHtml(c)}</option>`
+          ).join('');
+        }
+      } catch(e) { sel.innerHTML = '<option value="">Error loading</option>'; }
+
+      document.getElementById('addDrawerBackdrop').classList.add('open');
+      document.getElementById('addProductDrawer').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('apName').focus();
+    }
+
+    function closeAddProductDrawer() {
+      document.getElementById('addDrawerBackdrop').classList.remove('open');
+      document.getElementById('addProductDrawer').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    async function saveNewProduct() {
+      const name         = document.getElementById('apName').value.trim();
+      const newCat       = document.getElementById('apNewCategory').value.trim();
+      const selCat       = document.getElementById('apCategory').value;
+      const category     = newCat || selCat;
+      const provider     = document.getElementById('apProvider').value.trim();
+      const unit         = document.getElementById('apUnit').value.trim();
+      const par_level    = parseFloat(document.getElementById('apParLevel').value)    || 0;
+      const current_stock= parseFloat(document.getElementById('apCurrentStock').value)|| 0;
+      const unit_cost    = parseFloat(document.getElementById('apUnitCost').value)    || 0;
+
+      const errEl = document.getElementById('apError');
+      errEl.style.display = 'none';
+
+      if (!name || !category) {
+        errEl.textContent = '✗ Product name and category are required.';
+        errEl.style.display = '';
+        return;
+      }
+
+      const btn = document.getElementById('btnSaveProduct');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        const res  = await fetch('/api/products/add', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ name, category, provider, unit, par_level, current_stock, unit_cost }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+
+        // Append to local list if it belongs to current section
+        stockProducts.push(json.product);
+        document.getElementById('stockProductCount').textContent = `${stockProducts.length} products`;
+        renderFilterChips();
+        renderStockList();
+
+        closeAddProductDrawer();
+      } catch(e) {
+        errEl.textContent = '✗ ' + e.message;
+        errEl.style.display = '';
+        btn.disabled = false;
+        btn.textContent = 'Save Product';
+      }
+    }
+
+    // ── TOOLS: DELETE PRODUCT ──
+    function confirmDeleteProduct(id, name) {
+      if (!confirm(`Delete "${name}"?\n\nThis will permanently remove it from the spreadsheet.`)) return;
+      deleteProduct(id);
+    }
+
+    async function deleteProduct(id) {
+      // Optimistically remove from local list and re-render
+      const prevProducts = [...stockProducts];
+      stockProducts = stockProducts.filter(p => p.id !== id);
+      document.getElementById('stockProductCount').textContent = `${stockProducts.length} products`;
+      renderFilterChips();
+      renderStockList();
+
+      try {
+        const res  = await fetch('/api/products/delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ id }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+      } catch(e) {
+        // Rollback on error
+        stockProducts = prevProducts;
+        renderFilterChips();
+        renderStockList();
+        alert('Error deleting product: ' + e.message);
+      }
+    }
+
+    // ── MENU: STATE ──
+    let menuDishes   = [];
+    let activeMenuTab = 'breakfast';
+
+    // Category → tab mapping
+    const BREAKFAST_CATS = ['Breakfast', 'Breakfast Arepa'];
+    const LUNCH_CATS     = ['Tapas', 'Main', 'Arepa', 'Side', 'Dessert'];
+
+    // Color palette per category
+    const CAT_COLORS = {
+      'Breakfast':       '#E8901A',
+      'Breakfast Arepa': '#FF5245',
+      'Tapas':           '#2A8E9D',
+      'Main':            '#374050',
+      'Arepa':           '#7C3AED',
+      'Side':            '#7A8694',
+      'Dessert':         '#D94FA1',
+    };
+
+    // ── MENU: LOAD DISH LIST ──
+    async function loadMenuList() {
+      _showToolView('tools-menu-list');
+      menuDishes   = [];
+      activeMenuTab = 'breakfast';
+      document.getElementById('menuDishCount').textContent     = '—';
+      document.getElementById('menuListLoading').style.display = 'flex';
+      document.getElementById('menuListError').style.display   = 'none';
+      document.getElementById('menuDishGrid').innerHTML        = '';
+      document.getElementById('menuTabs').style.display        = 'none';
+      document.getElementById('btnAddDish').style.display      = 'none';
+      document.getElementById('menuTabBreakfast').classList.add('active');
+      document.getElementById('menuTabLunch').classList.remove('active');
+
+      try {
+        const res  = await fetch('/api/menu/items');
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        menuDishes = json.data;
+        document.getElementById('menuListLoading').style.display = 'none';
+        document.getElementById('menuDishCount').textContent     = `${menuDishes.length} dishes`;
+        document.getElementById('menuTabs').style.display        = '';
+        document.getElementById('btnAddDish').style.display      = '';
+        renderDishList();
+      } catch(e) {
+        document.getElementById('menuListLoading').style.display = 'none';
+        const el = document.getElementById('menuListError');
+        el.style.display = ''; el.textContent = '✗ ' + e.message;
+      }
+    }
+
+    function setMenuTab(tab) {
+      activeMenuTab = tab;
+      document.getElementById('menuTabBreakfast').classList.toggle('active', tab === 'breakfast');
+      document.getElementById('menuTabLunch').classList.toggle('active',     tab === 'lunch');
+      renderDishList();
+    }
+
+    // ── MENU: STATUS HELPERS ──
+    function statusClass(s) {
+      if (s === 'OUT OF STOCK') return 'out';
+      if (s === 'LOW STOCK')    return 'low';
+      if (s === 'OK')           return 'ok';
+      return 'na';
+    }
+    function statusLabel(s) {
+      if (s === 'OUT OF STOCK') return 'Out of stock';
+      if (s === 'LOW STOCK')    return 'Low stock';
+      if (s === 'OK')           return 'OK';
+      return 'No ingredients';
+    }
+
+    // ── MENU: RENDER DISH LIST (tabbed + grouped by category) ──
+    function renderDishList() {
+      const grid = document.getElementById('menuDishGrid');
+      if (!menuDishes.length) {
+        grid.innerHTML = '<div class="empty">No dishes found. Add one or run the setup script.</div>';
+        return;
+      }
+
+      const cats = activeMenuTab === 'breakfast' ? BREAKFAST_CATS : LUNCH_CATS;
+      let html = '';
+
+      cats.forEach(cat => {
+        const catDishes = menuDishes.filter(d => d.category === cat);
+        if (!catDishes.length) return;
+        const color = CAT_COLORS[cat] || '#7A8694';
+        html += `
+        <div class="cat-section">
+          <div class="cat-section-header" style="border-color:${color}">
+            <span class="cat-section-title" style="color:${color}">${escHtml(cat)}</span>
+            <span class="cat-section-count">${catDishes.length} dish${catDishes.length > 1 ? 'es' : ''}</span>
+          </div>
+          <div class="dish-grid">
+            ${catDishes.map(d => {
+              const sc = statusClass(d.status);
+              return `
+              <div class="dish-card" style="border-left-color:${color}" onclick="openMenuDish(${JSON.stringify(d.id)})">
+                <div class="dish-card-name">${escHtml(d.name)}</div>
+                ${d.notes ? `<div class="dish-card-notes">${escHtml(d.notes)}</div>` : ''}
+                <div class="dish-card-footer">
+                  <span class="status-dot ${sc}"></span>
+                  <span class="status-label ${sc}">${statusLabel(d.status)}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      });
+
+      if (!html) html = '<div class="empty">No dishes in this section.</div>';
+      grid.innerHTML = html;
+    }
+
+    // ── MENU: OPEN DISH DETAIL ──
+    async function openMenuDish(dishId) {
+      // Show drawer immediately in loading state
+      document.getElementById('menuDishName').textContent     = 'Loading…';
+      document.getElementById('menuDishMeta').textContent     = '';
+      document.getElementById('menuCanMakeNum').textContent   = '—';
+      document.getElementById('menuLimitingIng').textContent  = '';
+      document.getElementById('menuIngLoading').style.display = 'flex';
+      document.getElementById('menuIngError').style.display   = 'none';
+      document.getElementById('menuIngTable').style.display   = 'none';
+
+      document.getElementById('menuDrawerBackdrop').classList.add('open');
+      document.getElementById('menuDrawer').classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        const res  = await fetch(`/api/menu/item/${encodeURIComponent(dishId)}`);
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        renderDishDetail(json.data);
+      } catch(e) {
+        document.getElementById('menuIngLoading').style.display = 'none';
+        const el = document.getElementById('menuIngError');
+        el.style.display = ''; el.textContent = '✗ ' + e.message;
+      }
+    }
+
+    function closeMenuDrawer() {
+      document.getElementById('menuDrawerBackdrop').classList.remove('open');
+      document.getElementById('menuDrawer').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // ── MENU: RENDER DISH DETAIL ──
+    function renderDishDetail(dish) {
+      document.getElementById('menuDishName').textContent = dish.name;
+      document.getElementById('menuDishMeta').textContent =
+        [dish.category, dish.notes].filter(Boolean).join(' · ');
+
+      // Can make
+      const cm = dish.can_make;
+      document.getElementById('menuCanMakeNum').textContent =
+        cm === null ? 'N/A' : cm;
+      document.getElementById('menuLimitingIng').textContent =
+        dish.limiting_ingredient ? `Limiting: ${dish.limiting_ingredient}` : '';
+
+      // Color the can-make number
+      const cmEl = document.getElementById('menuCanMakeNum');
+      cmEl.style.color = cm === null ? 'var(--muted)' :
+                         cm === 0   ? 'var(--coral)'  :
+                         cm < 5     ? 'var(--yellow)'  : 'var(--teal)';
+
+      // Ingredient table
+      const tbody = document.getElementById('menuIngBody');
+      if (!dish.ingredients.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem">
+          No ingredients linked. Add them in the Menu_Ingredients sheet.</td></tr>`;
+      } else {
+        tbody.innerHTML = dish.ingredients.map(ing => {
+          const sc  = statusClass(ing.status);
+          const opt = ing.optional;
+          const stockClass = ing.status === 'OUT OF STOCK' ? 'ing-stock-out'
+                           : ing.status === 'LOW STOCK'    ? 'ing-stock-low'
+                           : 'ing-stock-ok';
+          return `
+          <tr class="${opt ? 'optional-row' : ''}">
+            <td class="ing-name">
+              ${escHtml(ing.ingredient_name || ing.product_id)}
+              ${opt ? '<span style="font-size:10px;margin-left:4px;color:var(--muted)">(optional)</span>' : ''}
+            </td>
+            <td class="ing-qty">${fmtNum(ing.qty_needed)} <span style="font-size:11px;font-family:Barlow,sans-serif;font-weight:400">${escHtml(ing.unit)}</span></td>
+            <td class="${stockClass}">${fmtNum(ing.current_stock)}</td>
+            <td style="color:var(--muted)">${fmtNum(ing.par_level)}</td>
+            <td>
+              <span class="status-dot ${sc}" style="margin-right:4px"></span>
+              <span class="status-label ${sc}">${statusLabel(ing.status)}</span>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+
+      document.getElementById('menuIngLoading').style.display = 'none';
+      document.getElementById('menuIngTable').style.display   = '';
+    }
+
+    // ── MENU: ADD DISH ──
+    function openAddDishDrawer() {
+      document.getElementById('adName').value     = '';
+      document.getElementById('adCategory').value = '';
+      document.getElementById('adNotes').value    = '';
+      document.getElementById('adError').style.display = 'none';
+      document.getElementById('btnSaveDish').disabled  = false;
+      document.getElementById('btnSaveDish').textContent = 'Save Dish';
+      document.getElementById('addDishBackdrop').classList.add('open');
+      document.getElementById('addDishDrawer').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('adName').focus();
+    }
+
+    function closeAddDishDrawer() {
+      document.getElementById('addDishBackdrop').classList.remove('open');
+      document.getElementById('addDishDrawer').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    async function saveNewDish() {
+      const name     = document.getElementById('adName').value.trim();
+      const category = document.getElementById('adCategory').value.trim();
+      const notes    = document.getElementById('adNotes').value.trim();
+      const errEl    = document.getElementById('adError');
+      errEl.style.display = 'none';
+      if (!name) {
+        errEl.textContent = '✗ Dish name is required.';
+        errEl.style.display = ''; return;
+      }
+      const btn = document.getElementById('btnSaveDish');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const res  = await fetch('/api/menu/items/add', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ name, category, notes }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        menuDishes.push(json.dish);
+        document.getElementById('menuDishCount').textContent = `${menuDishes.length} dishes`;
+        renderDishList();
+        closeAddDishDrawer();
+      } catch(e) {
+        errEl.textContent = '✗ ' + e.message;
+        errEl.style.display = '';
+        btn.disabled = false; btn.textContent = 'Save Dish';
+      }
     }
 
     // ── INIT ──
