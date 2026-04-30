@@ -157,8 +157,8 @@ def get_kpis():
     }
 
 SECTION_CATEGORIES = {
-    'kitchen': ['kitchen', 'cafe', 'food', 'dairy', 'produce', 'bakery', 'pastry', 'cleaning', 'supplies', 'operations'],
-    'bar':     ['bar', 'soft drinks', 'beer', 'wine', 'spirits', 'cider', 'rtd', 'juice', 'water', 'mixers'],
+    'kitchen': ['kitchen', 'food', 'dairy', 'produce', 'bakery', 'pastry', 'cleaning', 'supplies', 'operations'],
+    'bar':     ['bar', 'cafe', 'soft drinks', 'beer', 'wine', 'spirits', 'cider', 'rtd', 'juice', 'water', 'mixers'],
 }
 
 def get_categories():

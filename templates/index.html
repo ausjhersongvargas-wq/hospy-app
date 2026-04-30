@@ -1330,10 +1330,10 @@
             <div class="tool-name">Kitchen</div>
             <div class="tool-desc">Stock, menu & kitchen tools</div>
           </button>
-          <button class="tool-card cat-card-btn" onclick="loadStockSection('bar')">
+          <button class="tool-card cat-card-btn" onclick="showBarHome()">
             <div class="tool-icon">🍺</div>
             <div class="tool-name">Bar</div>
-            <div class="tool-desc">Spirits, wine, beer & bar supplies</div>
+            <div class="tool-desc">Bar stock, cafe & beverages</div>
           </button>
         </div>
       </div>
@@ -1353,6 +1353,25 @@
             <div class="tool-icon">📋</div>
             <div class="tool-name">Menu</div>
             <div class="tool-desc">Dishes, ingredients & portions available</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bar Home: Bar | Cafe -->
+      <div id="tools-bar-home" style="display:none">
+        <button class="back-btn" onclick="showStockHome()">← Stock</button>
+        <div class="section-title" style="margin-bottom:0.5rem">Bar</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:2rem">Choose a bar section to manage</p>
+        <div class="tool-grid">
+          <button class="tool-card cat-card-btn" onclick="loadStockSection('bar')">
+            <div class="tool-icon">🍸</div>
+            <div class="tool-name">Bar</div>
+            <div class="tool-desc">Beer, wine, spirits, mixers & soft drinks</div>
+          </button>
+          <button class="tool-card cat-card-btn" onclick="loadStockSection('bar','cafe')">
+            <div class="tool-icon">☕</div>
+            <div class="tool-name">Cafe</div>
+            <div class="tool-desc">Coffee, milk, syrups & cafe supplies</div>
           </button>
         </div>
       </div>
@@ -1968,7 +1987,7 @@
 
     // ── TOOLS: NAVIGATION ──
     const TOOL_VIEWS = [
-      'tools-home', 'tools-stock-home', 'tools-kitchen-home',
+      'tools-home', 'tools-stock-home', 'tools-kitchen-home', 'tools-bar-home',
       'tools-stock-list', 'tools-menu-list', 'tools-stock-order'
     ];
     function _showToolView(id) {
@@ -1981,8 +2000,11 @@
     function startStockTool() { _showToolView('tools-stock-home'); }
     function showStockHome()  { _showToolView('tools-stock-home'); }
     function showKitchenHome(){ _showToolView('tools-kitchen-home'); }
+    function showBarHome()    { _showToolView('tools-bar-home'); }
     function backFromStockList() {
-      stockSection === 'kitchen' ? showKitchenHome() : showStockHome();
+      if (stockSection === 'kitchen') showKitchenHome();
+      else if (stockSection === 'bar') showBarHome();
+      else showStockHome();
     }
     function showStockList() {
       _showToolView('tools-stock-list');
@@ -1991,15 +2013,18 @@
     }
 
     // ── TOOLS: LOAD PRODUCTS ──
-    async function loadStockSection(section) {
+    async function loadStockSection(section, initialFilter = null) {
       stockSection        = section;
-      stockCategory       = section.charAt(0).toUpperCase() + section.slice(1);
       stockCategoryFilter = null;
       stockProducts       = [];
 
-      document.getElementById('tools-stock-home').style.display  = 'none';
-      document.getElementById('tools-stock-list').style.display  = '';
-      document.getElementById('tools-stock-order').style.display = 'none';
+      // Title: "Bar — Cafe" when pre-filtered, otherwise just section name
+      const sectionTitle = section.charAt(0).toUpperCase() + section.slice(1);
+      stockCategory = initialFilter
+        ? `${sectionTitle} — ${initialFilter.charAt(0).toUpperCase() + initialFilter.slice(1)}`
+        : sectionTitle;
+
+      _showToolView('tools-stock-list');
       document.getElementById('stockListTitle').textContent       = stockCategory;
       document.getElementById('stockListLoading').style.display  = 'flex';
       document.getElementById('stockListError').style.display    = 'none';
@@ -2013,6 +2038,15 @@
         const json = await res.json();
         if (!json.ok) throw new Error(json.error);
         stockProducts = json.data;
+
+        // Pre-select filter chip if requested (case-insensitive match)
+        if (initialFilter) {
+          const il = initialFilter.toLowerCase();
+          const match = [...new Set(stockProducts.map(p => p.category).filter(Boolean))]
+                          .find(c => c.toLowerCase() === il);
+          stockCategoryFilter = match || null;
+        }
+
         document.getElementById('stockListLoading').style.display = 'none';
         document.getElementById('stockProductCount').textContent  = `${stockProducts.length} products`;
         document.getElementById('btnAddProduct').style.display    = '';
