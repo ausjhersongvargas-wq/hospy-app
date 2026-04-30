@@ -2085,13 +2085,14 @@
         const pdfIcon = hasPdf
           ? `<span style="margin-left:8px;font-size:11px;color:var(--amber);opacity:0.7">↗ PDF</span>`
           : '';
+        const editTitle = 'Click to edit total';
         return `
         <tr class="${rowClass}" ${onClick} title="${hasPdf ? 'Click to open PDF' : ''}">
           <td class="mono" style="color:var(--muted);font-size:11px">${escHtml(i.date)}</td>
           <td class="mono" style="font-size:12px">${escHtml(i.invoice_number)}</td>
           <td class="inv-provider" style="font-weight:500">${escHtml(i.provider)}${pdfIcon}</td>
           <td class="hide-mobile mono" style="color:var(--muted)">${i.items}</td>
-          <td class="invoice-total">${fmt$(i.total)}</td>
+          <td class="invoice-total" title="${editTitle}" onclick="editInvoiceTotal(this, ${i._row}, ${i.total}); event.stopPropagation();" style="cursor:pointer">${fmt$(i.total)}</td>
           <td class="hide-mobile"><span class="badge ok"><span class="badge-dot"></span>${escHtml(i.status || 'Processed')}</span></td>
         </tr>`;
       }).join('');
@@ -2116,6 +2117,49 @@
         btn.textContent = '✗ Error';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
         alert('Fix failed: ' + e.message);
+      }
+    }
+
+    function editInvoiceTotal(td, row, currentTotal) {
+      if (td.querySelector('input')) return; // already editing
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.step = '0.01';
+      inp.value = currentTotal;
+      inp.style.cssText = 'width:90px;background:var(--card-bg);color:var(--text);border:1px solid var(--amber);border-radius:4px;padding:2px 6px;font-size:13px;font-family:var(--mono)';
+      td.textContent = '';
+      td.appendChild(inp);
+      inp.focus();
+      inp.select();
+      inp.onblur = () => saveInvoiceTotal(td, row, inp.value, currentTotal);
+      inp.onkeydown = (e) => {
+        if (e.key === 'Enter') inp.blur();
+        if (e.key === 'Escape') { td.textContent = fmt$(currentTotal); }
+      };
+    }
+
+    async function saveInvoiceTotal(td, row, rawValue, oldTotal) {
+      const newTotal = parseFloat(rawValue);
+      if (isNaN(newTotal) || newTotal === oldTotal) {
+        td.textContent = fmt$(oldTotal);
+        return;
+      }
+      td.textContent = '⏳';
+      try {
+        const res  = await fetch('/api/invoices/update-total', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ row, total: newTotal })
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+        // Update local data so sorting stays consistent
+        const inv = invoicesData.find(i => i._row === row);
+        if (inv) inv.total = newTotal;
+        td.textContent = fmt$(newTotal);
+      } catch(e) {
+        td.textContent = fmt$(oldTotal);
+        alert('Error saving: ' + e.message);
       }
     }
 

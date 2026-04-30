@@ -93,16 +93,16 @@ def get_invoices():
     il = sh.worksheet('Invoice_Log')
     rows = il.get_all_values()
 
+    def safe_float(val):
+        try:
+            return float(str(val).replace(',', '').replace('$', '').strip())
+        except:
+            return 0.0
+
     invoices = []
-    for row in rows[2:]:  # skip 2 header rows
+    for sheet_row, row in enumerate(rows[2:], start=3):  # skip 2 header rows; sheet_row is 1-indexed
         if not row[0] and not row[1]:
             continue
-
-        def safe_float(val):
-            try:
-                return float(str(val).replace(',', '').replace('$', '').strip())
-            except:
-                return 0.0
 
         invoices.append({
             'date': row[0].strip() if row[0] else '',
@@ -112,9 +112,18 @@ def get_invoices():
             'items': int(safe_float(row[4])) if len(row) > 4 else 0,
             'total': safe_float(row[5]) if len(row) > 5 else 0.0,
             'status': row[6].strip() if len(row) > 6 else '',
+            '_row': sheet_row,
         })
 
     return invoices
+
+
+def update_invoice_total(sheet_row, new_total):
+    """Update the total (col F) of a single Invoice_Log row by sheet row number."""
+    sh = get_spreadsheet(write=True)
+    il = sh.worksheet('Invoice_Log')
+    il.update([[float(new_total)]], f'F{sheet_row}', value_input_option='USER_ENTERED')
+    return sheet_row
 
 def fix_invoice_log_totals():
     """
@@ -144,13 +153,21 @@ def fix_invoice_log_totals():
         items     = int(_safe(row[4])) if len(row) > 4 else 0
         provider  = row[2].strip() if len(row) > 2 else ''
         inv_num   = row[1].strip() if len(row) > 1 else ''
+        filename  = row[3].strip() if len(row) > 3 else ''
         factor    = 1
 
-        # A total > 10,000 is almost certainly 100x off for a hospitality business
-        if total > 10000:
+        # ONLY fix rows that went through the extractor pipeline (have a .json filename).
+        # Manually-entered invoices (insurance, rent, etc.) are left untouched — they
+        # can be legitimately large and heuristics would wrongly alter them.
+        if not filename.lower().endswith('.json'):
+            continue
+
+        # For food/bev invoices: a unit cost > $500 is impossible, so if the
+        # total implies that, the decimal was dropped (100x shift).
+        # items=0 means we don't know the count — skip to be safe.
+        if items > 0 and (total / items) > 500:
             factor = 100
-        # Between 1,000–10,000 with very high per-item average → also likely 100x
-        elif total > 1000 and items > 0 and (total / items) > 300:
+        elif total > 50000:
             factor = 100
 
         if factor > 1:
