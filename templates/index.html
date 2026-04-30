@@ -658,6 +658,40 @@
     }
     .add-product-btn:hover { border-color: var(--teal); color: var(--teal); }
 
+    /* ── CATEGORY BADGE (clickable, inline on card) ── */
+    .spc-cat-wrap { position: relative; display: inline-block; }
+    .spc-cat-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase;
+      border: 1px solid var(--border); background: var(--surface2); color: var(--muted);
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .spc-cat-badge:hover  { border-color: var(--teal); color: var(--teal); }
+    .spc-cat-badge.saving { opacity: 0.5; pointer-events: none; }
+    .spc-cat-badge::after { content: ' ▾'; font-size: 8px; }
+
+    .cat-dropdown {
+      position: absolute; top: calc(100% + 4px); left: 0;
+      z-index: 200;
+      background: var(--surface);
+      border: 1.5px solid var(--border2);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      min-width: 160px;
+      padding: 4px 0;
+    }
+    .cat-dd-item {
+      display: block; width: 100%; text-align: left;
+      padding: 7px 14px; border: none; background: none; cursor: pointer;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--text); transition: background 0.1s;
+    }
+    .cat-dd-item:hover   { background: var(--surface2); color: var(--teal); }
+    .cat-dd-item.current { color: var(--teal); }
+
     /* ── DELETE PRODUCT BUTTON ── */
     .spc-delete-btn {
       background: none; border: none; cursor: pointer;
@@ -2012,6 +2046,8 @@
       renderStockList();
     }
 
+    let allStockCategories = []; // all categories from Master_Stock (for cross-section moves)
+
     // ── TOOLS: LOAD PRODUCTS ──
     async function loadStockSection(section, initialFilter = null) {
       stockSection        = section;
@@ -2050,6 +2086,14 @@
         document.getElementById('stockListLoading').style.display = 'none';
         document.getElementById('stockProductCount').textContent  = `${stockProducts.length} products`;
         document.getElementById('btnAddProduct').style.display    = '';
+
+        // Load ALL categories (for cross-section reassignment dropdown)
+        try {
+          const catRes  = await fetch('/api/categories');
+          const catJson = await catRes.json();
+          if (catJson.ok) allStockCategories = catJson.data;
+        } catch(_) {}
+
         renderFilterChips();
         renderStockList();
         document.getElementById('stockGenerateBar').style.display = '';
@@ -2080,6 +2124,72 @@
       renderFilterChips();
       renderStockList();
     }
+
+    // ── TOOLS: CATEGORY BADGE DROPDOWN ──
+    let _catDdOpen = null; // { idx }
+
+    function toggleCatDropdown(evt, idx, productId, currentCat) {
+      evt.stopPropagation();
+      if (_catDdOpen && _catDdOpen.idx === idx) { closeCatDropdown(); return; }
+      closeCatDropdown();
+
+      const dd = document.getElementById(`cat-dd-${idx}`);
+      if (!dd) return;
+
+      // Use all master categories (cross-section moves), fall back to loaded products
+      const cats = allStockCategories.length
+        ? allStockCategories
+        : [...new Set(stockProducts.map(p => p.category).filter(Boolean))].sort();
+
+      dd.innerHTML = cats.map(cat => `
+        <button class="cat-dd-item ${cat === currentCat ? 'current' : ''}"
+          onclick="selectProductCat(event,${idx},${JSON.stringify(productId)},${JSON.stringify(cat)})">
+          ${escHtml(cat)}
+        </button>`).join('');
+
+      dd.style.display = '';
+      _catDdOpen = { idx };
+    }
+
+    function closeCatDropdown() {
+      if (_catDdOpen !== null) {
+        const dd = document.getElementById(`cat-dd-${_catDdOpen.idx}`);
+        if (dd) dd.style.display = 'none';
+        _catDdOpen = null;
+      }
+    }
+
+    async function selectProductCat(evt, idx, productId, newCat) {
+      evt.stopPropagation();
+      closeCatDropdown();
+
+      const oldCat = stockProducts[idx].category;
+      if (newCat === oldCat) return; // no change
+
+      // Optimistic update — re-render immediately
+      stockProducts[idx].category = newCat;
+      renderFilterChips();
+      renderStockList();
+
+      try {
+        const res = await fetch('/api/products/category', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ id: productId, category: newCat }),
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error);
+      } catch(e) {
+        // Rollback on error
+        stockProducts[idx].category = oldCat;
+        renderFilterChips();
+        renderStockList();
+        alert('Error saving category: ' + e.message);
+      }
+    }
+
+    // Close dropdown when clicking anywhere outside
+    document.addEventListener('click', closeCatDropdown);
 
     // ── TOOLS: RENDER PRODUCT LIST ──
     function renderStockList() {
@@ -2115,7 +2225,16 @@
           <div class="stock-product-card" data-id="${escHtml(p.id)}">
             <div>
               <div class="spc-name">${escHtml(p.name)}</div>
-              <div class="spc-provider">${escHtml(p.provider)}${p.unit ? ' · ' + escHtml(p.unit) : ''}</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:3px">
+                <div class="spc-provider">${escHtml(p.provider)}${p.unit ? ' · ' + escHtml(p.unit) : ''}</div>
+                <div class="spc-cat-wrap">
+                  <button class="spc-cat-badge" id="cat-badge-${idx}"
+                    onclick="toggleCatDropdown(event,${idx},${JSON.stringify(p.id)},${JSON.stringify(p.category)})">
+                    ${escHtml(p.category || 'none')}
+                  </button>
+                  <div class="cat-dropdown" id="cat-dd-${idx}" style="display:none"></div>
+                </div>
+              </div>
             </div>
             <div class="spc-fields">
               <div class="spc-field">

@@ -256,6 +256,18 @@ def add_product(name, category, provider, unit, par_level, current_stock, unit_c
     }
 
 
+def update_product_category(product_id, new_category):
+    """Update the category (col C) of a product by ID."""
+    sh   = get_spreadsheet(write=True)
+    ms   = sh.worksheet('Master_Stock')
+    rows = ms.get_all_values()
+    for i, row in enumerate(rows[2:], start=3):
+        if row and row[0].strip() == product_id:
+            ms.update([[new_category]], f'C{i}', value_input_option='USER_ENTERED')
+            return i
+    raise ValueError(f'Product {product_id} not found')
+
+
 def delete_product(product_id):
     """Find product row by ID (col A) and delete the entire row."""
     sh   = get_spreadsheet(write=True)
