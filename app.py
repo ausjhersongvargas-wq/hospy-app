@@ -2,7 +2,8 @@ import os
 import functools
 from flask import (Flask, render_template, jsonify, send_file,
                    abort, request, session, redirect, url_for)
-from sheets import get_kpis, get_products, get_invoices, update_product
+from sheets import get_kpis, get_products, get_invoices, update_product, \
+                   get_products_by_category, batch_update_stock
 
 # ── CONFIG ───────────────────────────────────────────────────────────────────
 INBOX_DIR  = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -97,6 +98,43 @@ def serve_invoice(filename):
     if not os.path.isfile(pdf_path):
         abort(404)
     return send_file(pdf_path, mimetype='application/pdf')
+
+# ── STOCK TOOL ───────────────────────────────────────────────────────────────
+@app.route('/api/stock-tool/<category>')
+@login_required
+def api_stock_tool_products(category):
+    allowed = {'kitchen', 'bar', 'cafe', 'cleaning', 'supplies', 'operations'}
+    if category.lower() not in allowed:
+        return jsonify({'ok': False, 'error': 'Invalid category'}), 400
+    try:
+        products = get_products_by_category(category)
+        # Remove internal _row field before sending to client
+        for p in products:
+            p.pop('_row', None)
+        return jsonify({'ok': True, 'data': products, 'category': category})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/stock-tool/save', methods=['POST'])
+@login_required
+def api_stock_tool_save():
+    try:
+        data    = request.get_json()
+        updates = data.get('updates', [])
+        if not updates:
+            return jsonify({'ok': False, 'error': 'No updates provided'}), 400
+        # Validate each entry
+        clean = []
+        for u in updates:
+            clean.append({
+                'id':            str(u.get('id', '')).strip(),
+                'par_level':     float(u.get('par_level', 0)),
+                'current_stock': float(u.get('current_stock', 0)),
+            })
+        count = batch_update_stock(clean)
+        return jsonify({'ok': True, 'updated': count})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 # ── RUN ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':

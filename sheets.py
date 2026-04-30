@@ -156,6 +156,73 @@ def get_kpis():
         'last_invoice_date': invoices[-1]['date'] if invoices else '',
     }
 
+def get_products_by_category(category):
+    """Return products filtered by category, with only fields needed for Stock tool."""
+    sh   = get_spreadsheet(write=False)
+    ms   = sh.worksheet('Master_Stock')
+    rows = ms.get_all_values()
+
+    def safe_float(val):
+        try:
+            return float(str(val).replace(',', '').replace('$', '').strip())
+        except:
+            return 0.0
+
+    products = []
+    for i, row in enumerate(rows[2:], start=3):
+        if len(row) < 7 or not row[1]:
+            continue
+        if row[1].strip().upper() == 'TOTAL':
+            continue
+        if row[2].strip().lower() != category.strip().lower():
+            continue
+        products.append({
+            'id':            row[0].strip(),
+            'name':          row[1].strip(),
+            'category':      row[2].strip(),
+            'provider':      row[3].strip() if len(row) > 3 else '',
+            'unit':          row[4].strip() if len(row) > 4 else '',
+            'par_level':     safe_float(row[5] if len(row) > 5 else 0),
+            'current_stock': safe_float(row[6] if len(row) > 6 else 0),
+            'reorder_point': safe_float(row[7] if len(row) > 7 else 0),
+            '_row':          i,   # sheet row number, used for batch update
+        })
+    return products
+
+
+def batch_update_stock(updates):
+    """
+    Save par_level + current_stock for multiple products in one Sheets API call.
+    updates = [{'id': 'P-101', 'par_level': 5, 'current_stock': 3}, ...]
+    Returns number of rows updated.
+    """
+    sh   = get_spreadsheet(write=True)
+    ms   = sh.worksheet('Master_Stock')
+    rows = ms.get_all_values()
+
+    # Build id → row_number map
+    id_to_row = {}
+    for i, row in enumerate(rows[2:], start=3):
+        if row[0].strip():
+            id_to_row[row[0].strip()] = i
+
+    cell_updates = []
+    updated = 0
+    for u in updates:
+        pid = u.get('id', '').strip()
+        if pid not in id_to_row:
+            continue
+        r = id_to_row[pid]
+        cell_updates.append({'range': f'F{r}', 'values': [[u['par_level']]]})
+        cell_updates.append({'range': f'G{r}', 'values': [[u['current_stock']]]})
+        updated += 1
+
+    if cell_updates:
+        ms.batch_update(cell_updates, value_input_option='USER_ENTERED')
+
+    return updated
+
+
 # Master_Stock columns: F=5 Par Level, G=6 Current Stock, H=7 Reorder Point
 def update_product(product_id, current_stock, par_level, reorder_point):
     """Find product row by ID (col A) and update stock fields."""
