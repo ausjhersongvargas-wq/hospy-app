@@ -89,13 +89,13 @@ def api_invoices():
 @login_required
 def api_update_invoice_total():
     try:
-        data      = request.get_json()
-        sheet_row = int(data.get('row', 0))
-        new_total = float(data.get('total', 0))
-        if sheet_row < 3:
-            return jsonify({'ok': False, 'error': 'Invalid row'}), 400
-        update_invoice_total(sheet_row, new_total)
-        return jsonify({'ok': True, 'row': sheet_row, 'total': new_total})
+        data           = request.get_json()
+        invoice_number = str(data.get('invoice_number', '')).strip()
+        new_total      = float(data.get('total', 0))
+        if not invoice_number:
+            return jsonify({'ok': False, 'error': 'Missing invoice_number'}), 400
+        row = update_invoice_total(invoice_number, new_total)
+        return jsonify({'ok': True, 'row': row, 'total': new_total})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 

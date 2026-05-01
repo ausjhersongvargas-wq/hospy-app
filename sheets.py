@@ -118,12 +118,16 @@ def get_invoices():
     return invoices
 
 
-def update_invoice_total(sheet_row, new_total):
-    """Update the total (col F) of a single Invoice_Log row by sheet row number."""
+def update_invoice_total(invoice_number, new_total):
+    """Update the total (col F) of an Invoice_Log row, found by invoice_number (col B)."""
     sh = get_spreadsheet(write=True)
     il = sh.worksheet('Invoice_Log')
-    il.update([[float(new_total)]], f'F{sheet_row}', value_input_option='USER_ENTERED')
-    return sheet_row
+    rows = il.get_all_values()
+    for idx, row in enumerate(rows[2:], start=3):   # skip 2 header rows; idx = actual sheet row
+        if len(row) > 1 and row[1].strip() == str(invoice_number).strip():
+            il.update([[float(new_total)]], f'F{idx}', value_input_option='USER_ENTERED')
+            return idx
+    raise ValueError(f'Invoice number "{invoice_number}" not found in Invoice_Log')
 
 def fix_invoice_log_totals():
     """

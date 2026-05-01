@@ -2095,7 +2095,7 @@
           <td class="mono" style="font-size:12px">${escHtml(i.invoice_number)}</td>
           <td class="inv-provider" style="font-weight:500">${escHtml(i.provider)}${pdfIcon}</td>
           <td class="hide-mobile mono" style="color:var(--muted)">${i.items}</td>
-          <td class="invoice-total" title="${editTitle}" onclick="editInvoiceTotal(this, ${i._row}, ${i.total}); event.stopPropagation();" style="cursor:pointer">${fmt$(i.total)}</td>
+          <td class="invoice-total" title="${editTitle}" onclick="editInvoiceTotal(this, '${escHtml(i.invoice_number)}', ${i.total}); event.stopPropagation();" style="cursor:pointer">${fmt$(i.total)}</td>
           <td class="hide-mobile"><span class="badge ok"><span class="badge-dot"></span>${escHtml(i.status || 'Processed')}</span></td>
         </tr>`;
       }).join('');
@@ -2123,27 +2123,32 @@
       }
     }
 
-    function editInvoiceTotal(td, row, currentTotal) {
+    function editInvoiceTotal(td, invoiceNumber, currentTotal) {
       if (td.querySelector('input')) return; // already editing
       const inp = document.createElement('input');
       inp.type = 'number';
       inp.step = '0.01';
       inp.value = currentTotal;
-      inp.style.cssText = 'width:90px;background:var(--card-bg);color:var(--text);border:1px solid var(--amber);border-radius:4px;padding:2px 6px;font-size:13px;font-family:var(--mono)';
+      inp.style.cssText = 'width:100px;background:var(--card-bg);color:var(--text);border:1px solid var(--amber);border-radius:4px;padding:2px 6px;font-size:13px;font-family:var(--mono)';
       td.textContent = '';
       td.appendChild(inp);
       inp.focus();
       inp.select();
-      inp.onblur = () => saveInvoiceTotal(td, row, inp.value, currentTotal);
+      let saved = false;
+      inp.onblur = () => { if (!saved) { saved = true; saveInvoiceTotal(td, invoiceNumber, inp.value, currentTotal); } };
       inp.onkeydown = (e) => {
-        if (e.key === 'Enter') inp.blur();
-        if (e.key === 'Escape') { td.textContent = fmt$(currentTotal); }
+        if (e.key === 'Enter')  { saved = true; inp.blur(); saveInvoiceTotal(td, invoiceNumber, inp.value, currentTotal); }
+        if (e.key === 'Escape') { saved = true; td.textContent = fmt$(currentTotal); }
       };
     }
 
-    async function saveInvoiceTotal(td, row, rawValue, oldTotal) {
+    async function saveInvoiceTotal(td, invoiceNumber, rawValue, oldTotal) {
       const newTotal = parseFloat(rawValue);
-      if (isNaN(newTotal) || newTotal === oldTotal) {
+      if (isNaN(newTotal)) {
+        td.textContent = fmt$(oldTotal);
+        return;
+      }
+      if (newTotal === oldTotal) {
         td.textContent = fmt$(oldTotal);
         return;
       }
@@ -2152,17 +2157,17 @@
         const res  = await fetch('/api/invoices/update-total', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ row, total: newTotal })
+          body: JSON.stringify({ invoice_number: invoiceNumber, total: newTotal })
         });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error);
-        // Update local data so sorting stays consistent
-        const inv = invoicesData.find(i => i._row === row);
+        // Update local data so re-sorting stays consistent
+        const inv = invoicesData.find(i => i.invoice_number === invoiceNumber);
         if (inv) inv.total = newTotal;
         td.textContent = fmt$(newTotal);
       } catch(e) {
         td.textContent = fmt$(oldTotal);
-        alert('Error saving: ' + e.message);
+        alert('❌ No se pudo guardar: ' + e.message);
       }
     }
 
