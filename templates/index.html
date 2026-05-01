@@ -1811,7 +1811,10 @@
 
     // ── FORMAT HELPERS ──
     function fmt$(n) {
-      return '$' + Number(n).toLocaleString('en-AU', {minimumFractionDigits:2, maximumFractionDigits:2});
+      const num = Number(n);
+      const parts = num.toFixed(2).split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return '$' + parts[0] + ',' + parts[1];
     }
 
     function fmtNum(n) {
