@@ -1839,9 +1839,10 @@
       document.getElementById('view-' + name).classList.add('active');
       btn.classList.add('active');
 
-      // Lazy-load data
-      if (name === 'products' && productsData.length === 0) loadProducts();
-      if (name === 'invoices' && invoicesData.length === 0) loadInvoices();
+      // Lazy-load / refresh data
+      if (name === 'dashboard' && kpisData === null) loadKPIs();
+      if (name === 'products'  && productsData.length === 0) loadProducts();
+      if (name === 'invoices'  && invoicesData.length === 0) loadInvoices();
       if (name === 'tools') showToolsHome();
     }
 
@@ -2282,9 +2283,8 @@
         // Remove from local data and re-render
         invoicesData = invoicesData.filter(i => i.invoice_number !== invoiceNumber);
         renderInvoices();
-        // Refresh KPI dashboard so invoice count updates
+        // Mark KPIs stale — will reload automatically next time user visits Dashboard
         kpisData = null;
-        loadKPIs();
       } catch(e) {
         btn.disabled = false;
         btn.textContent = '🗄';
@@ -2307,8 +2307,9 @@
         btn.closest('tr').remove();
         const remaining = document.querySelectorAll('#invArchBody tr').length;
         document.getElementById('invArchCount').textContent = `${remaining} archived`;
-        // Force reload of invoice list next time user visits it
+        // Force reload of invoice list and KPIs next time user visits those tabs
         invoicesData = [];
+        kpisData     = null;
       } catch(e) {
         btn.disabled = false;
         btn.textContent = 'Restore';
