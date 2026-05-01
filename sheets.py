@@ -129,6 +129,100 @@ def update_invoice_total(invoice_number, new_total):
             return idx
     raise ValueError(f'Invoice number "{invoice_number}" not found in Invoice_Log')
 
+
+# ── INVOICE ARCHIVE ───────────────────────────────────────────────────────────
+
+def _ensure_archived_invoices_sheet(sh):
+    """Return Archived_Invoices worksheet, creating it with headers if needed."""
+    wss = {ws.title: ws for ws in sh.worksheets()}
+    if 'Archived_Invoices' not in wss:
+        ws = sh.add_worksheet(title='Archived_Invoices', rows=500, cols=9)
+        ws.append_row(['Date', 'Invoice #', 'Provider', 'Filename',
+                       'Items', 'Total', 'Status', 'Archived Date'])
+        return ws
+    return wss['Archived_Invoices']
+
+
+def archive_invoice(invoice_number):
+    """Move an invoice row from Invoice_Log to Archived_Invoices."""
+    sh   = get_spreadsheet(write=True)
+    il   = sh.worksheet('Invoice_Log')
+    rows = il.get_all_values()
+
+    row_num  = None
+    row_data = None
+    for idx, row in enumerate(rows[2:], start=3):
+        if len(row) > 1 and row[1].strip() == str(invoice_number).strip():
+            row_num  = idx
+            row_data = list(row)
+            break
+
+    if row_num is None:
+        raise ValueError(f'Invoice "{invoice_number}" not found in Invoice_Log')
+
+    arch  = _ensure_archived_invoices_sheet(sh)
+    today = datetime.now().strftime('%d/%m/%Y')
+    archived_row = (row_data + [''] * 8)[:7] + [today]
+    arch.append_row(archived_row, value_input_option='USER_ENTERED')
+    il.delete_rows(row_num)
+    return row_num
+
+
+def get_archived_invoices():
+    """Return list of archived invoices from Archived_Invoices sheet."""
+    sh  = get_spreadsheet(write=False)
+    wss = {ws.title: ws for ws in sh.worksheets()}
+    if 'Archived_Invoices' not in wss:
+        return []
+    rows = wss['Archived_Invoices'].get_all_values()
+    invoices = []
+    for idx, row in enumerate(rows[1:], start=2):   # 1 header row
+        if len(row) < 2 or not row[1].strip():
+            continue
+        def _sf(v):
+            try: return float(str(v).replace(',','').replace('$','').strip())
+            except: return 0.0
+        invoices.append({
+            'date':            row[0].strip() if row[0] else '',
+            'invoice_number':  row[1].strip(),
+            'provider':        row[2].strip() if len(row) > 2 else '',
+            'filename':        row[3].strip() if len(row) > 3 else '',
+            'items':           int(_sf(row[4])) if len(row) > 4 else 0,
+            'total':           _sf(row[5]) if len(row) > 5 else 0.0,
+            'status':          row[6].strip() if len(row) > 6 else '',
+            'archived_date':   row[7].strip() if len(row) > 7 else '',
+            '_row':            idx,
+        })
+    return invoices
+
+
+def restore_invoice(invoice_number):
+    """Move an invoice from Archived_Invoices back to Invoice_Log."""
+    sh  = get_spreadsheet(write=True)
+    wss = {ws.title: ws for ws in sh.worksheets()}
+    if 'Archived_Invoices' not in wss:
+        raise ValueError('Archived_Invoices sheet does not exist')
+
+    arch = wss['Archived_Invoices']
+    rows = arch.get_all_values()
+
+    row_num  = None
+    row_data = None
+    for idx, row in enumerate(rows[1:], start=2):
+        if len(row) > 1 and row[1].strip() == str(invoice_number).strip():
+            row_num  = idx
+            row_data = list(row)
+            break
+
+    if row_num is None:
+        raise ValueError(f'Invoice "{invoice_number}" not found in Archived_Invoices')
+
+    il_row = (row_data + [''] * 7)[:7]   # first 7 cols, drop archived_date
+    sh.worksheet('Invoice_Log').append_row(il_row, value_input_option='USER_ENTERED')
+    arch.delete_rows(row_num)
+    return row_num
+
+
 def fix_invoice_log_totals():
     """
     Scan Invoice_Log and correct totals that are 100x too large

@@ -7,6 +7,7 @@ from sheets import get_kpis, get_products, get_invoices, update_product, \
                    get_categories, get_products_by_section, add_product, delete_product, \
                    update_product_category, get_archived_products, restore_product, \
                    fix_invoice_log_totals, update_invoice_total, \
+                   archive_invoice, get_archived_invoices, restore_invoice, \
                    get_menu_items, get_menu_item_detail, add_menu_item, \
                    add_menu_ingredient, delete_menu_ingredient
 
@@ -96,6 +97,40 @@ def api_update_invoice_total():
             return jsonify({'ok': False, 'error': 'Missing invoice_number'}), 400
         row = update_invoice_total(invoice_number, new_total)
         return jsonify({'ok': True, 'row': row, 'total': new_total})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/invoices/archive', methods=['POST'])
+@login_required
+def api_archive_invoice():
+    try:
+        data           = request.get_json()
+        invoice_number = str(data.get('invoice_number', '')).strip()
+        if not invoice_number:
+            return jsonify({'ok': False, 'error': 'Missing invoice_number'}), 400
+        row = archive_invoice(invoice_number)
+        return jsonify({'ok': True, 'row': row})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/invoices/archived')
+@login_required
+def api_archived_invoices():
+    try:
+        return jsonify({'ok': True, 'data': get_archived_invoices()})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/invoices/restore', methods=['POST'])
+@login_required
+def api_restore_invoice():
+    try:
+        data           = request.get_json()
+        invoice_number = str(data.get('invoice_number', '')).strip()
+        if not invoice_number:
+            return jsonify({'ok': False, 'error': 'Missing invoice_number'}), 400
+        row = restore_invoice(invoice_number)
+        return jsonify({'ok': True, 'row': row})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
 
