@@ -2150,7 +2150,7 @@
           <td class="hide-mobile mono" style="color:var(--muted)">${i.items}</td>
           <td class="invoice-total" title="${editTitle}" onclick="editInvoiceTotal(this, '${escHtml(i.invoice_number)}', ${i.total}); event.stopPropagation();" style="cursor:pointer">${fmt$(i.total)}</td>
           <td class="hide-mobile"><span class="badge ok"><span class="badge-dot"></span>${escHtml(i.status || 'Processed')}</span></td>
-          <td style="text-align:center"><button class="inv-archive-btn" title="Archivar factura" onclick="archiveInvoice('${escHtml(i.invoice_number)}', this); event.stopPropagation();">🗄</button></td>
+          <td style="text-align:center"><button class="inv-archive-btn" title="Archivar factura" onclick="archiveInvoice(${i._row}, this); event.stopPropagation();">🗄</button></td>
         </tr>`;
       }).join('');
     }
@@ -2268,23 +2268,22 @@
         </tr>`).join('');
     }
 
-    async function archiveInvoice(invoiceNumber, btn) {
-      if (!confirm(`¿Archivar la factura ${invoiceNumber}? Podrás restaurarla después.`)) return;
+    async function archiveInvoice(sheetRow, btn) {
+      if (!confirm(`¿Archivar esta factura? Podrás restaurarla después.`)) return;
       btn.disabled = true;
       btn.textContent = '⏳';
       try {
         const res  = await fetch('/api/invoices/archive', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ invoice_number: invoiceNumber })
+          body: JSON.stringify({ sheet_row: sheetRow })
         });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error);
-        // Remove from local data and re-render
-        invoicesData = invoicesData.filter(i => i.invoice_number !== invoiceNumber);
-        renderInvoices();
-        // Mark KPIs stale — will reload automatically next time user visits Dashboard
-        kpisData = null;
+        // Reload from server to get exact count (avoids duplicate invoice_number issue)
+        invoicesData = [];
+        kpisData     = null;
+        await loadInvoices();
       } catch(e) {
         btn.disabled = false;
         btn.textContent = '🗄';

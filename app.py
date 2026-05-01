@@ -104,11 +104,11 @@ def api_update_invoice_total():
 @login_required
 def api_archive_invoice():
     try:
-        data           = request.get_json()
-        invoice_number = str(data.get('invoice_number', '')).strip()
-        if not invoice_number:
-            return jsonify({'ok': False, 'error': 'Missing invoice_number'}), 400
-        row = archive_invoice(invoice_number)
+        data      = request.get_json()
+        sheet_row = int(data.get('sheet_row', 0))
+        if sheet_row < 3:
+            return jsonify({'ok': False, 'error': 'Invalid sheet_row'}), 400
+        row = archive_invoice(sheet_row)
         return jsonify({'ok': True, 'row': row})
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500

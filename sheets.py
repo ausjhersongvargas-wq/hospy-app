@@ -143,29 +143,24 @@ def _ensure_archived_invoices_sheet(sh):
     return wss['Archived_Invoices']
 
 
-def archive_invoice(invoice_number):
-    """Move an invoice row from Invoice_Log to Archived_Invoices."""
+def archive_invoice(sheet_row):
+    """Move an invoice row from Invoice_Log to Archived_Invoices by exact sheet row number."""
     sh   = get_spreadsheet(write=True)
     il   = sh.worksheet('Invoice_Log')
     rows = il.get_all_values()
 
-    row_num  = None
-    row_data = None
-    for idx, row in enumerate(rows[2:], start=3):
-        if len(row) > 1 and row[1].strip() == str(invoice_number).strip():
-            row_num  = idx
-            row_data = list(row)
-            break
+    # sheet_row is 1-indexed; rows list is 0-indexed
+    row_idx = sheet_row - 1
+    if row_idx < 0 or row_idx >= len(rows):
+        raise ValueError(f'Row {sheet_row} out of range in Invoice_Log')
 
-    if row_num is None:
-        raise ValueError(f'Invoice "{invoice_number}" not found in Invoice_Log')
-
+    row_data = list(rows[row_idx])
     arch  = _ensure_archived_invoices_sheet(sh)
     today = datetime.now().strftime('%d/%m/%Y')
     archived_row = (row_data + [''] * 8)[:7] + [today]
     arch.append_row(archived_row, value_input_option='USER_ENTERED')
-    il.delete_rows(row_num)
-    return row_num
+    il.delete_rows(sheet_row)
+    return sheet_row
 
 
 def get_archived_invoices():
