@@ -160,19 +160,26 @@ def fix_invoice_log_totals():
         filename  = row[3].strip() if len(row) > 3 else ''
         factor    = 1
 
-        # ONLY fix rows that went through the extractor pipeline (have a .json filename).
-        # Manually-entered invoices (insurance, rent, etc.) are left untouched — they
-        # can be legitimately large and heuristics would wrongly alter them.
+        # Only fix rows that went through the extractor pipeline (have a .json filename).
+        # Manually-entered invoices (insurance, rent, etc.) are left untouched.
         if not filename.lower().endswith('.json'):
             continue
 
-        # For food/bev invoices: a unit cost > $500 is impossible, so if the
-        # total implies that, the decimal was dropped (100x shift).
-        # items=0 means we don't know the count — skip to be safe.
-        if items > 0 and (total / items) > 500:
-            factor = 100
-        elif total > 50000:
-            factor = 100
+        # For food/bev/hospitality invoices the realistic per-item average is $5–$200.
+        # If the average is 10x or 100x that, the decimal was dropped during extraction.
+        # We check both factors and pick the one that lands in a plausible range.
+        if items > 0:
+            avg = total / items
+            if avg > 5000:        # avg > $5000/item → definitely 100x off
+                factor = 100
+            elif avg > 500:       # avg > $500/item → likely 10x off
+                factor = 10
+        else:
+            # No item count — use total magnitude alone
+            if total > 50000:
+                factor = 100
+            elif total > 5000:
+                factor = 10
 
         if factor > 1:
             new_total = round(total / factor, 2)
