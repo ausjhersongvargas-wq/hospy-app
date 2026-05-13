@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospy — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #FFFFFF;
+      font-family: 'Barlow', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      border: 1.5px solid #E4E8EB;
+      padding: 2.5rem 2rem 2rem;
+      background: #fff;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: #2A8E9D;
+      clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .logo-mark span {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px; color: #fff; line-height: 1;
+    }
+
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px; letter-spacing: 3px; color: #374050;
+    }
+
+    .logo-text em { color: #2A8E9D; font-style: normal; }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; letter-spacing: 3px;
+      color: #7A8694; margin-bottom: 1.75rem;
+      text-transform: uppercase;
+    }
+
+    .field { margin-bottom: 1rem; }
+
+    label {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #7A8694; margin-bottom: 6px;
+      font-family: 'Barlow', sans-serif;
+    }
+
+    input {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid #E4E8EB;
+      background: #fff; color: #374050;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #2A8E9D; }
+
+    .btn {
+      width: 100%; padding: 14px;
+      background: #2A8E9D; color: #fff; border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem; letter-spacing: 3px;
+      cursor: pointer; margin-top: 1.25rem;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+
+    .error {
+      background: rgba(255,82,69,0.07);
+      border: 1px solid rgba(255,82,69,0.25);
+      color: #FF5245;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; padding: 10px 12px;
+      margin-bottom: 1rem;
+    }
+
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 11px; color: #7A8694;
+      font-family: 'JetBrains Mono', monospace;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-mark"><span>H</span></div>
+      <div class="logo-text">HOS<em>PY</em></div>
+    </div>
+    <h1>Stock Dashboard</h1>
+
+    {% if error %}
+    <div class="error">✗ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" name="username" autocomplete="username"
+               autofocus placeholder="hospy" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" autocomplete="current-password"
+               placeholder="••••••••" />
+      </div>
+      <button class="btn" type="submit">Enter</button>
+    </form>
+
+    <div class="footer">Cumbia Bar & Kitchen · Adelaide SA</div>
+  </div>
+</body>
+</html>
